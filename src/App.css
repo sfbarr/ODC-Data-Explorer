@@ -1,0 +1,132 @@
+/* Logo */
+
+#logoBackground {
+  /* Circular backdrop behind the logo */
+  justify-self: center;
+
+  width: clamp(54px, 5vw, 74px);
+  height: clamp(54px, 5vw, 74px);
+
+  /* margin */  
+  margin-bottom: 1em;
+  margin-top: 1em;
+
+  border-radius: 999px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Default smaller drop shadow for contrast */
+  filter: drop-shadow(0 0 1.5em #48adffaa);
+  /* border: 1px solid rgba(255, 255, 255); */
+
+  /* Optional depth so it reads as a badge */
+  /* box-shadow: 0 6px 18px rgba(0, 0, 0, 0.99); */
+}
+
+#odc-logo {
+  /* Let the image scale nicely inside the circular badge */
+  height: 90%;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* Spin keyframes */
+@keyframes logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Glow + spin only when hovering the logo badge */
+#logoBackground:hover #odc-logo {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+  animation: logo-spin 1.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #logoBackground:hover #odc-logo {
+    animation: none !important;
+  }
+}
+
+
+
+/* cossette-titre-regular - latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Cossette Titre';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./assets/fonts/cossette-titre-v3-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* benchnine-regular - latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Chillax';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./assets/fonts/Chillax-Regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* league spartan */
+@font-face {
+  font-family: swap;
+  font-family: 'league-spartan';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./assets/fonts/league-spartan-normal-100\ 900.woff2');
+}
+
+.brandTitle {
+  justify-self: center;
+  font-family: 'league-spartan', sans-serif;
+  margin-bottom: 1em;
+}
+
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  background-color: rgb(20, 20, 35);
+  border-color: #0c15b7;
+}
+
+
+.tabs {
+  width: 30vw;
+  display: flex;
+  justify-self: center;
+  margin: 0;
+  border-radius: 10px;
+
+  /* Reserve space so hover/active borders never shift layout */
+  border: 2px solid transparent;
+
+  background: rgba(0, 0, 0, 0.25);
+
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.tabs > button {
+  flex-grow: 1;
+  margin: 1px;
+  font-family: 'league-spartan', sans-serif;
+}
+
+.tabs button.active { 
+  color: rgba(0, 0, 0, 0.25);
+
+  background-color: #8293e1;
+  color: black;
+}

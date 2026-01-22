@@ -7,7 +7,7 @@
   width: clamp(54px, 5vw, 74px);
   height: clamp(54px, 5vw, 74px);
 
-  /* margin */  
+  /* margin */
   margin-bottom: 1em;
   margin-top: 1em;
 
@@ -35,8 +35,12 @@
 
 /* Spin keyframes */
 @keyframes logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Glow + spin only when hovering the logo badge */
@@ -51,41 +55,39 @@
   }
 }
 
-
-
 /* cossette-titre-regular - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Cossette Titre';
+  font-family: "Cossette Titre";
   font-style: normal;
   font-weight: 400;
-  src: url('./assets/fonts/cossette-titre-v3-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url("./assets/fonts/cossette-titre-v3-latin-regular.woff2")
+    format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
 /* benchnine-regular - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Chillax';
+  font-family: "Chillax";
   font-style: normal;
   font-weight: 400;
-  src: url('./assets/fonts/Chillax-Regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url("./assets/fonts/Chillax-Regular.woff2") format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
 /* league spartan */
 @font-face {
   font-family: swap;
-  font-family: 'league-spartan';
+  font-family: "league-spartan";
   font-style: normal;
   font-weight: 400;
-  src: url('./assets/fonts/league-spartan-normal-100\ 900.woff2');
+  src: url("./assets/fonts/league-spartan-normal-100\\ 900.woff2");
 }
 
 .brandTitle {
   justify-self: center;
-  font-family: 'league-spartan', sans-serif;
+  font-family: "league-spartan", sans-serif;
   margin-bottom: 1em;
 }
-
 
 button {
   border-radius: 8px;
@@ -103,30 +105,98 @@ button:hover {
   border-color: #0c15b7;
 }
 
+/* Tabs */
 
 .tabs {
-  width: 30vw;
-  display: flex;
+  /* Always 3 equal columns */
+  width: min(640px, 92vw);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
   justify-self: center;
   margin: 0;
   border-radius: 10px;
+  overflow: hidden; /* keeps rounded corners clean */
 
   /* Reserve space so hover/active borders never shift layout */
   border: 2px solid transparent;
 
   background: rgba(0, 0, 0, 0.25);
 
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease, box-shadow 0.2s ease;
 }
+
 .tabs > button {
-  flex-grow: 1;
-  margin: 1px;
-  font-family: 'league-spartan', sans-serif;
+  width: 100%;
+  min-width: 0; /* allows equal shrink */
+  margin: 0;
+  border-radius: 0;
+  font-family: "league-spartan", sans-serif;
+
+  /* Prevent awkward wrapping like Cure\nMap unless super narrow */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.tabs button.active { 
-  color: rgba(0, 0, 0, 0.25);
+@media (max-width: 420px) {
+  .tabs > button {
+    white-space: normal;
+  }
+}
 
+.tabs button.active {
   background-color: #8293e1;
   color: black;
+}
+
+
+/* Row holding all our FilterStubs */
+.dropdownSpan {
+  width: min(1200px, 85vw);
+  margin: 0 auto;
+
+  display: flex;          /* makes children lay out in a row */
+  flex-wrap: wrap;        /* allows wrapping instead of overflow */
+  gap: 0.75rem;
+  justify-content: center; /* keeps them centered when wrapping */
+  align-items: flex-start;
+}
+
+/* Each FilterStub "tile" */
+.dropdownSpan .filterStub {
+  flex: 1 1 240px;   /* grow, shrink, base width */
+  max-width: 360px;  /* optional: prevents huge tiles on wide screens */
+}
+
+/* Make the Bootstrap dropdown fill the stub width */
+.filterStub .dropdown,
+.filterStub .dropdownToggle {
+  width: 100%;
+}
+
+/* Optional: dropdown menu width matches the toggle */
+.filterStub .filterMenu {
+  width: 100%;
+  max-height: 320px;   /* gives you scroll for long lists */
+  overflow: auto;
+}
+
+/* -------- RangeSlider sizing/centering --------- */
+
+/* Center the range sliders and match the filter row width */
+.rangeStub {
+  width: min(1200px, 85vw);
+  margin: 0 auto;
+}
+
+/* Ensure the track wrapper fills the stub width */
+.rangeWrap {
+  width: 100%;
+}
+
+/* Optional: keep some breathing room between stacked sliders */
+.rangeStub + .rangeStub {
+  margin-top: 0.75rem;
 }

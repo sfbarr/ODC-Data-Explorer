@@ -5,11 +5,17 @@ export type Range = { min: number; max: number };
 // Stub slider component props for filter UI elements
 export type RangeSliderProps = {
   label: string;
-  domain: Range;          // allowed range
-  value: Range;           // current selection
+  domain: Range; // allowed range
   step?: number;
   format?: (n: number) => string;
   onChange: (next: Range) => void;
+};
+
+export type FilterStubProps = {
+  label: string;
+  options: string[];      // possible values
+  values: string[];        // selected values
+  onChange: (next: string[]) => void;
 };
 
 // Until we sanitize the input data (grants.json, options.json), we probably can't use this type

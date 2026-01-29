@@ -16,6 +16,22 @@ function toStringSafe(v: unknown): string {
   return String(v);
 }
 
+// For our year sliders
+function parseIntSafe(v: unknown): number | null {
+  const s = toStringSafe(v).trim();
+  if (!s) return null;
+  const n = Number(s.replace(/,/g, ""));
+  return Number.isFinite(n) ? Math.trunc(n) : null;
+}
+// for our money/funding sliders
+function parseMoneySafe(v: unknown): number | null {
+  const s = toStringSafe(v).trim();
+  if (!s) return null;
+  const cleaned = s.replace(/[$,]/g, "").trim();
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : null;
+}
+
 function splitOutsideParens(s: string, delims: Set<string>): string[] {
   const out: string[] = [];
   let cur = "";
@@ -135,12 +151,17 @@ function main() {
     raw: false,
   }) as Row[];
 
-  // Normalize headers (optional but helpful)
+  // Normalize headers
   const rows: Row[] = rawRows.map((r) => {
     const out: Row = {};
     for (const [k, v] of Object.entries(r)) {
       out[normalizeHeader(k)] = v;
     }
+
+    // overwrite the values used in the future range sliders to be numbers
+    if ("Fiscal Year" in out) out["Fiscal Year"] = parseIntSafe(out["Fiscal Year"]) ?? out["Fiscal Year"];
+    if ("Amount" in out) out["Amount"] = parseMoneySafe(out["Amount"]) ?? out["Amount"];
+
     return out;
   });
 

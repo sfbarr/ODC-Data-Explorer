@@ -4,11 +4,11 @@
   /* Circular backdrop behind the logo */
   justify-self: center;
 
-  width: clamp(54px, 5vw, 74px);
-  height: clamp(54px, 5vw, 74px);
+  width: clamp(60px, 5vw, 70px);
+  height: clamp(60px, 5vw, 70px);
 
   /* margin */
-  margin-bottom: 1em;
+  /* margin-bottom: 1em; */
   margin-top: 1em;
 
   border-radius: 999px;
@@ -151,23 +151,51 @@ button:hover {
   color: black;
 }
 
+ /* ------- main page, below tabs ------- */
+.layout {
+  width: min(1400px, 95vw);
+  margin: 0.75rem auto 1.25rem;
 
-/* Row holding all our FilterStubs */
-.dropdownSpan {
-  width: min(1200px, 85vw);
-  margin: 0 auto;
-
-  display: flex;          /* makes children lay out in a row */
-  flex-wrap: wrap;        /* allows wrapping instead of overflow */
-  gap: 0.75rem;
-  justify-content: center; /* keeps them centered when wrapping */
+  display: flex;
+  gap: 1rem;
   align-items: flex-start;
 }
 
-/* Each FilterStub "tile" */
-.dropdownSpan .filterStub {
-  flex: 1 1 240px;   /* grow, shrink, base width */
-  max-width: 360px;  /* optional: prevents huge tiles on wide screens */
+.sidebar {
+  /* left rail */
+  flex: 0 0 clamp(240px, 24vw, 340px);
+  max-width: 400px;
+
+  /* margin: 1rem 0; */
+  align-self: flex-start;
+
+  /* keep it visible while scrolling results */
+  position: sticky;
+  top: 1rem;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(10px);
+  padding: 0.75rem;
+
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+
+/* Box holding all our FilterStubs (inside the sidebar) */
+.filterStubsContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 0rem;
+}
+
+/* Each FilterStub takes full sidebar width */
+.filterStubsContainer .filterStub {
+  width: 100%;
 }
 
 /* Make the Bootstrap dropdown fill the stub width */
@@ -178,17 +206,82 @@ button:hover {
 
 /* Optional: dropdown menu width matches the toggle */
 .filterStub .filterMenu {
+  margin-top: 0.5rem;
   width: 100%;
   max-height: 320px;   /* gives you scroll for long lists */
   overflow: auto;
 }
 
+/* FilterStub styling for readability */
+.filterStub {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+  padding: 0.6rem;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.filterLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.filterLabel {
+  font-size: 0.95rem;
+  opacity: 0.95;
+}
+
+.filterCount {
+  opacity: 0.75;
+}
+
+.filterClear {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+}
+
+.filterClear:hover {
+  border-color: rgba(84, 139, 244, 0.95);
+}
+
+.filterOptions {
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.35rem;
+}
+
+.filterOption {
+  width: 100%;
+  text-align: left;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(0, 0, 0, 0.22);
+  padding: 0.45rem 0.55rem;
+  font-size: 0.92rem;
+}
+
+.filterOption:hover {
+  border-color: rgba(84, 139, 244, 0.95);
+  background: rgba(15, 18, 36, 0.6);
+}
+
+.filterOption.active {
+  border-color: rgba(84, 139, 244, 0.95);
+  background: rgba(84, 139, 244, 0.18);
+}
+
 /* -------- RangeSlider sizing/centering --------- */
 
-/* Center the range sliders and match the filter row width */
+/* RangeSlider sizing inside the sidebar */
 .rangeStub {
-  width: min(1200px, 85vw);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0 0.5rem;
 }
 
 /* Ensure the track wrapper fills the stub width */
@@ -196,7 +289,293 @@ button:hover {
   width: 100%;
 }
 
+/* RangeSlider styling */
+.rangeLabel {
+  font-size: 0.95rem;
+  opacity: 0.92;
+  margin-bottom: 0.35rem;
+}
+
+.rangeTrack {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.rangeThumb {
+  cursor: grab;
+}
+
+.rangeThumb:active {
+  cursor: grabbing;
+}
+
 /* Optional: keep some breathing room between stacked sliders */
 .rangeStub + .rangeStub {
   margin-top: 0.75rem;
+}
+
+
+.resultsBox {
+  width: min(1400px, 95vw);
+  margin: 0.75rem auto 0.25rem;
+  padding: 0.75rem 0.9rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(10px);
+}
+
+.resultsButtons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.canvas {
+  flex: 1 1 auto;
+  min-width: 0; /* prevents overflow when content is wide */
+}
+
+.canvas {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.14);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.canvasHeader {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.canvasTitle {
+  font-family: "league-spartan", sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+}
+
+.searchRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: rgba(84, 139, 244, 0.95);
+  box-shadow: 0 0 0 4px rgba(84, 139, 244, 0.18);
+}
+
+.canvasBody {
+  padding: 0.9rem 1rem 1.2rem;
+}
+
+.placeholder {
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 1rem;
+  opacity: 0.85;
+}
+
+/* Panels */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.panelTitle {
+  font-family: "league-spartan", sans-serif;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  opacity: 0.85;
+  margin-bottom: 0.25rem;
+}
+
+/* Buttons utilities */
+.btn {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 0.55rem 0.8rem;
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.btn:hover {
+  border-color: rgba(84, 139, 244, 0.95);
+  background: rgba(15, 18, 36, 0.6);
+}
+
+.btn.ghost {
+  background: transparent;
+}
+
+.toggleCardButton {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 0.55rem 0.8rem;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.toggleCardButton:hover {
+  border-color: rgba(84, 139, 244, 0.95);
+}
+
+/* -------- Responsive: situate sidebar above canvas on mobile -------- */
+/* -------- might change orientation later ---------------------------- */
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1rem auto;
+    width: min(1400px, 95vw);
+  }
+
+  .sidebar {
+    position: static; /* disable sticky on small screens */
+    top: auto;
+
+    flex: 0 0 auto;
+    max-width: none;
+    width: 100%;
+
+    overflow: visible; /* let dropdowns expand naturally */
+    padding-right: 0;
+  }
+
+  .canvas {
+    width: 100%;
+  }
+}
+
+/* =============================
+   Grant rendering: sheet + cards
+   ============================= */
+
+.grantSheet {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.grantSheetHeader {
+  display: grid;
+  grid-template-columns: 1fr 90px 180px 130px;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.30);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.grantRow {
+  display: grid;
+  grid-template-columns: 1fr 90px 180px 130px;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.grantRow:hover {
+  border-color: rgba(84, 139, 244, 0.55);
+  background: rgba(15, 18, 36, 0.55);
+}
+
+.cell.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell.amount,
+.cell.year {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cell.agency {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grantCards {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.grantCard {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.18);
+  padding: 0.85rem;
+}
+
+.grantCard:hover {
+  border-color: rgba(84, 139, 244, 0.55);
+  background: rgba(15, 18, 36, 0.55);
+}
+
+.grantCardTitle {
+  font-weight: 650;
+  margin-bottom: 0.35rem;
+}
+
+.grantCardMeta {
+  display: flex;
+  gap: 0.5rem;
+  opacity: 0.85;
+  font-size: 0.9rem;
+  margin-bottom: 0.55rem;
+}
+
+.grantCardAbstract {
+  opacity: 0.92;
+  line-height: 1.35;
+}
+
+@media (max-width: 860px) {
+  .grantSheetHeader,
+  .grantRow {
+    grid-template-columns: 1fr 80px 140px 120px;
+  }
+}
+
+@media (max-width: 640px) {
+  .grantSheetHeader,
+  .grantRow {
+    grid-template-columns: 1fr 70px;
+  }
+
+  .grantSheetHeader .col.agency,
+  .grantSheetHeader .col.amount,
+  .grantRow .cell.agency,
+  .grantRow .cell.amount {
+    display: none;
+  }
 }

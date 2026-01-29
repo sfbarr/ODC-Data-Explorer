@@ -158,7 +158,7 @@ export default function ExplorerPage({ grants, options }: ExplorerPageProps) {
                 ) : null}
                 </div>
                 <div className="resultsButtons">
-                    <button className="btn">Download CSV</button>
+                    <button className="btn">Download</button>
                     <button className="btn ghost">Reset</button>
                 </div>
             </div>

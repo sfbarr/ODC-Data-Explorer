@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css"; 
 import odcLogo from "./assets/odc-centered-logo.png";  // ODC logo 
 import ExplorerPage from "./pages/ExplorerPage";
+import CureMapPage from "./pages/CureMapPage";
 
 // Tab View state (1 of 3 possible values)
 type Tab = "explorer" | "cure-map" | "gap-finder";
@@ -85,9 +86,7 @@ export default function App() {
       </header>
       <div className="canvasBody">
         {tab === "explorer" && <ExplorerPage grants={grants} options={options} />}
-        {tab === "cure-map" && (
-          <div className="placeholder">Map view will render here (filtered grants).</div>
-        )}
+        {tab === "cure-map" && <CureMapPage grants={grants} />}
         {tab === "gap-finder" && (
           <div className="placeholder">Heatmap/pivot view will render here.</div>
         )}

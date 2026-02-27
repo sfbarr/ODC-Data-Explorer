@@ -12,11 +12,13 @@
     "build:data": "tsx scripts/build-data.ts"
   },
   "dependencies": {
+    "@vnedyalk0v/react19-simple-maps": "^2.0.2",
     "bootstrap": "^5.3.8",
     "react": "^19.2.0",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.0",
-    "react-range": "^1.10.0"
+    "react-range": "^1.10.0",
+    "us-atlas": "^3.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

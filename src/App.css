@@ -83,6 +83,16 @@
   src: url("./assets/fonts/league-spartan-normal-100\\ 900.woff2");
 }
 
+/* Global layout sanity: avoid tiny horizontal scroll/offset on mobile */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 .brandTitle {
   justify-self: center;
   font-family: "league-spartan", sans-serif;
@@ -454,12 +464,17 @@ button:hover {
 @media (max-width: 768px) {
   .layout {
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0rem;
     margin: 1rem auto;
-    width: min(1400px, 95vw);
+
+    width: 100%;
+    max-width: 1400px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 
   .sidebar {
+    gap: 0rem;
     position: static; /* disable sticky on small screens */
     top: auto;
 
@@ -469,10 +484,16 @@ button:hover {
 
     overflow: visible; /* let dropdowns expand naturally */
     padding-right: 0;
+    box-sizing: border-box;
+  }
+  .filterStubsContainer {
+    gap: 0rem;
+    padding-left: 0rem;
   }
 
   .canvas {
     width: 100%;
+    box-sizing: border-box;
   }
 }
 
@@ -480,17 +501,23 @@ button:hover {
    Grant rendering: sheet + cards
    ============================= */
 
+/* ---- Sheet (row) view ---- */
 .grantSheet {
   display: grid;
   gap: 0.4rem;
 }
 
-.grantSheetHeader {
+.grantSheetHeader,
+.grantRow {
   display: grid;
-  grid-template-columns: 1fr 90px 180px 130px;
+  grid-template-columns: 1.6fr 84px 160px 140px 70px 200px 78px;
   gap: 0.75rem;
-  padding: 0.6rem 0.75rem;
+  padding: 0.65rem 0.75rem;
   border-radius: 12px;
+  align-items: center;
+}
+
+.grantSheetHeader {
   background: rgba(0, 0, 0, 0.30);
   border: 1px solid rgba(255, 255, 255, 0.10);
   font-size: 0.85rem;
@@ -498,11 +525,6 @@ button:hover {
 }
 
 .grantRow {
-  display: grid;
-  grid-template-columns: 1fr 90px 180px 130px;
-  gap: 0.75rem;
-  padding: 0.65rem 0.75rem;
-  border-radius: 12px;
   background: rgba(0, 0, 0, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.10);
 }
@@ -512,28 +534,58 @@ button:hover {
   background: rgba(15, 18, 36, 0.55);
 }
 
-.cell.title {
+/* Title + agency + mechanism ellipsis */
+.grantSheetHeader .col.title,
+.grantRow .cell.title,
+.grantSheetHeader .col.agency,
+.grantRow .cell.agency,
+.grantSheetHeader .col.mechanism,
+.grantRow .cell.mechanism {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.cell.amount,
-.cell.year {
+/* Numeric alignment (header + values) */
+.grantSheetHeader .col.year,
+.grantSheetHeader .col.amount,
+.grantRow .cell.year,
+.grantRow .cell.amount {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-.cell.agency {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* Link column centered */
+.grantSheetHeader .col.link,
+.grantRow .cell.link {
+  text-align: center;
 }
 
+/* Pill link used in sheet */
+.pillLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.10);
+}
+
+.pillLink:hover {
+  border-color: rgba(84, 139, 244, 0.75);
+}
+
+/* ---- Cards view ---- */
 .grantCards {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  align-items: stretch;
 }
 
 .grantCard {
@@ -541,6 +593,10 @@ button:hover {
   border-radius: 14px;
   background: rgba(0, 0, 0, 0.18);
   padding: 0.85rem;
+  min-width: 0px;
+  flex: 1 1 375px;                 /* preferred card width */
+  max-width: 520px;                /* prevents giant single cards on wide screens */
+  box-sizing: border-box;
 }
 
 .grantCard:hover {
@@ -548,41 +604,117 @@ button:hover {
   background: rgba(15, 18, 36, 0.55);
 }
 
+.grantCardTop {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
 .grantCardTitle {
   font-weight: 650;
-  margin-bottom: 0.35rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .grantCardMeta {
   display: flex;
   gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
   opacity: 0.85;
   font-size: 0.9rem;
-  margin-bottom: 0.55rem;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  opacity: 0.65;
+  margin-right: 6px;
+}
+
+.grantCardDetails {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+  opacity: 0.95;
 }
 
 .grantCardAbstract {
   opacity: 0.92;
   line-height: 1.35;
+  margin-bottom: 12px;
 }
 
-@media (max-width: 860px) {
+.grantCardBottom {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  opacity: 0.92;
+  font-size: 0.9em;
+  background: rgba(0, 0, 0, 0.10);
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.btnLink {
+  padding: 8px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.10);
+}
+
+.btnLink:hover {
+  border-color: rgba(84, 139, 244, 0.75);
+}
+
+@media (max-width: 640px) {
+  .grantCard {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+}
+
+/* ---- Responsive sheet columns ---- */
+@media (max-width: 900px) {
   .grantSheetHeader,
   .grantRow {
-    grid-template-columns: 1fr 80px 140px 120px;
+    grid-template-columns: 1.6fr 84px 160px 140px 78px;
+  }
+
+  .grantSheetHeader .col.state,
+  .grantRow .cell.state,
+  .grantSheetHeader .col.mechanism,
+  .grantRow .cell.mechanism {
+    display: none;
   }
 }
 
 @media (max-width: 640px) {
   .grantSheetHeader,
   .grantRow {
-    grid-template-columns: 1fr 70px;
+    grid-template-columns: 1fr 84px;
   }
 
   .grantSheetHeader .col.agency,
   .grantSheetHeader .col.amount,
+  .grantSheetHeader .col.link,
   .grantRow .cell.agency,
-  .grantRow .cell.amount {
+  .grantRow .cell.amount,
+  .grantRow .cell.link {
     display: none;
   }
 }

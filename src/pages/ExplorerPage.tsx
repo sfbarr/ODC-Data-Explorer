@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import type { OptionsMap, Filters } from "../types/types";
 import RangeSlider from "../components/RangeSlider";
 import FilterStub from "../components/FilterStub";
@@ -46,19 +46,41 @@ export default function ExplorerPage({ grants, options }: ExplorerPageProps) {
   // Safely read options by key (my options.json keys)
   const opt = (key: string) => options[key] ?? [];
 
+  const resetAll = () => {
+    setQ("");
+    setFilters({
+      agency: [],
+      agencyIc: [],
+      objectiveGeneral: [],
+      objectiveSpecific: [],
+      intervention: [],
+      readiness: [],
+      state: [],
+      fiscalYear: undefined,
+      amountUsd: undefined,
+    });
+    setResetNonce((n) => n + 1);
+  };
+
   // --- Helpers ---
   const normalize = (v: unknown) =>
-  String(v ?? "")
-    .toLowerCase()
-    .trim()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, ""); // removes diacritics safely
+    String(v ?? "")
+      .toLowerCase()
+      .trim()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, ""); // removes diacritics safely
 
   const parseAmount = (v: unknown) => {
     if (typeof v === "number") return v;
     const cleaned = String(v ?? "").replace(/[^0-9.-]/g, "");
     const n = Number(cleaned);
     return Number.isFinite(n) ? n : 0;
+  };
+
+  const normalizeUrl = (u: unknown) => {
+    const s = String(u ?? "").trim();
+    if (!s) return "";
+    return s.startsWith("http://") || s.startsWith("https://") ? s : `https://${s}`;
   };
 
   
@@ -172,127 +194,17 @@ export default function ExplorerPage({ grants, options }: ExplorerPageProps) {
     <div id="ExplorerParent">
         
       <div className="layout">
-        <aside className="sidebar">
-         
-          <section className="panel">
-            <div className="panelTitle" style={{ fontWeight: "bold" }}>Filters</div>
-
-            <div className="filterStubsContainer">
-                <FilterStub
-                label="Agency"
-                options={opt("Agency")}
-                values={filters.agency}
-                onChange={(next) => setFilters((f) => ({ ...f, agency: next }))}
-                />
-
-                <FilterStub
-                label="Agency IC"
-                options={opt("Agency IC")}
-                values={filters.agencyIc}
-                onChange={(next) => setFilters((f) => ({ ...f, agencyIc: next }))}
-                />
-
-                <FilterStub
-                label="Objective - General"
-                options={opt("Objective - General")}
-                values={filters.objectiveGeneral}
-                onChange={(next) =>
-                    setFilters((f) => ({ ...f, objectiveGeneral: next }))
-                }
-                />
-
-                <FilterStub
-                label="Objective - Specific"
-                options={opt("Objective - Specific")}
-                values={filters.objectiveSpecific}
-                onChange={(next) =>
-                    setFilters((f) => ({ ...f, objectiveSpecific: next }))
-                }
-                />
-
-                <FilterStub
-                label="Intervention"
-                options={opt("Intervention")}
-                values={filters.intervention}
-                onChange={(next) =>
-                    setFilters((f) => ({ ...f, intervention: next }))
-                }
-                />
-
-                <FilterStub
-                label="Readiness"
-                options={opt("Readiness")}
-                values={filters.readiness}
-                onChange={(next) => setFilters((f) => ({ ...f, readiness: next }))}
-                />
-
-                <FilterStub
-                label="State"
-                options={opt("State")}
-                values={filters.state}
-                onChange={(next) => setFilters((f) => ({ ...f, state: next }))}
-                />
-            </div>
-
-            <RangeSlider
-              key={`year-${resetNonce}`}
-              label="Year"
-              domain={yearDomain}
-              step={1}
-              onChange={(next) =>
-                setFilters((f) => ({ ...f, fiscalYear: next }))
-              }
-            />
-
-            <RangeSlider
-              key={`funding-${resetNonce}`}
-              label="Funding"
-              domain={{ min: 0, max: 6000000 }}
-              step={10000}
-              format={formatUsd}
-              onChange={(next) =>
-                setFilters((f) => ({ ...f, amountUsd: next }))
-              }
-            />
-
-            <div className="resultsBox">
-                <div className="resultsLine">
-                <strong>{matches}</strong> matches out of <strong>{grants.length}</strong>
-                {q.trim() ? (
-                    <span style={{ marginLeft: "0.75rem", opacity: 0.8 }}>
-                    Search:&ensp;<code>{q.trim()}</code>
-                    </span>
-                ) : null}
-                </div>
-                <div className="resultsButtons">
-                    <button className="btn">Download</button>
-                    <button
-                      className="btn ghost"
-                      type="button"
-                      onClick={() => {
-                        setQ("");
-                        setFilters({
-                          agency: [],
-                          agencyIc: [],
-                          objectiveGeneral: [],
-                          objectiveSpecific: [],
-                          intervention: [],
-                          readiness: [],
-                          state: [],
-                          fiscalYear: undefined,
-                          amountUsd: undefined,
-                        });
-                        setResetNonce((n) => n + 1);
-                      }}
-                    >
-                      Reset
-                    </button>
-                </div>
-            </div>
-
-          </section>
-        </aside>
-
+        <GrantsSidebar
+          grantsCount={grants.length}
+          matches={matches}
+          q={q}
+          setQ={setQ}
+          filters={filters}
+          setFilters={setFilters}
+          resetNonce={resetNonce}
+          resetAll={resetAll}
+          opt={opt}
+        />
         <main className="canvas">
           <div className="canvasHeader">
             <div className="canvasTitle">Explorer</div>
@@ -329,15 +241,38 @@ export default function ExplorerPage({ grants, options }: ExplorerPageProps) {
                   <div className="col year">Year</div>
                   <div className="col agency">Agency</div>
                   <div className="col amount">Amount</div>
+                  <div className="col state">State</div>
+                  <div className="col mechanism">Mechanism</div>
+                  <div className="col link">Link</div>
                 </div>
 
                 {filteredGrants.map((g: any, idx: number) => (
                   <div className="grantRow" key={g.id ?? `${g["Project Title"] ?? g.title ?? "grant"}-${idx}`}> 
-                    <div className="cell title">{g["Project Title"] ?? g.title ?? "(untitled)"}</div>
+                    <div className="cell title" title={g["Project Title"] ?? g.title ?? ""}>
+                      {g["Project Title"] ?? g.title ?? "(untitled)"}
+                    </div>
                     <div className="cell year">{g["Fiscal Year"] ?? "—"}</div>
                     <div className="cell agency">{g["Agency"] ?? "—"}</div>
                     <div className="cell amount">
                       {g["Amount"] != null ? formatUsd(parseAmount(g["Amount"])) : "—"}
+                    </div>
+                    <div className="cell state">{g["State"] ?? "—"}</div>
+                    <div className="cell mechanism" title={g["Mechanism"] ?? ""}>
+                      {g["Mechanism"] ?? "—"}
+                    </div>
+                    <div className="cell link">
+                      {g["URL"] ? (
+                        <a
+                          className="pillLink"
+                          href={normalizeUrl(g["URL"]) }
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open
+                        </a>
+                      ) : (
+                        <span style={{ opacity: 0.6 }}>—</span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -346,26 +281,54 @@ export default function ExplorerPage({ grants, options }: ExplorerPageProps) {
               <div className="grantCards">
                 {filteredGrants.map((g: any, idx: number) => (
                   <div className="grantCard" key={g.id ?? `${g["Project Title"] ?? g.title ?? "grant"}-${idx}`}> 
-                    <div className="grantCardTitle">{g["Project Title"] ?? g.title ?? "(untitled)"}</div>
-                    <div className="grantCardMeta">
-                      <span>{g["Fiscal Year"] ?? "—"}</span>
-                      <span>•</span>
-                      <span>{g["Agency"] ?? "—"}</span>
-                      {g["Amount"] != null ? (
-                        <>
-                          <span>•</span>
-                          <span>
-                            {formatUsd(parseAmount(g["Amount"]))}
-                          </span>
-                        </>
-                      ) : null}
+                    <div className="grantCardTop">
+                      <div className="grantCardTitle" title={g["Project Title"] ?? g.title ?? ""}>
+                        {g["Project Title"] ?? g.title ?? "(untitled)"}
+                      </div>
+                      <div className="grantCardMeta">
+                        <span className="num">{g["Fiscal Year"] ?? "—"}</span>
+                        <span>•</span>
+                        <span>{g["Agency"] ?? "—"}{g["Agency IC"] ? ` / ${g["Agency IC"]}` : ""}</span>
+                        {g["Amount"] != null ? (
+                          <>
+                            <span>•</span>
+                            <span className="num">{formatUsd(parseAmount(g["Amount"]))}</span>
+                          </>
+                        ) : null}
+                      </div>
                     </div>
+
+                    <div className="grantCardDetails">
+                      <div><span className="label">PI:</span> {g["PI"] ?? "—"}</div>
+                      <div><span className="label">Org:</span> {g["Organization"] ?? "—"}</div>
+                      <div><span className="label">State:</span> {g["State"] ?? "—"}</div>
+                      <div><span className="label">Mechanism:</span> {g["Mechanism"] ?? "—"}</div>
+                    </div>
+
                     {g["Project Abstract"] || g.abstract ? (
                       <div className="grantCardAbstract">
                         {String(g["Project Abstract"] ?? g.abstract).slice(0, 240)}
                         {String(g["Project Abstract"] ?? g.abstract).length > 240 ? "…" : ""}
                       </div>
                     ) : null}
+
+                    <div className="grantCardBottom">
+                      {g["Readiness"] ? <span className="tag">{g["Readiness"]}</span> : null}
+                      {g["Intervention"] ? <span className="tag">{g["Intervention"]}</span> : null}
+                      <span className="spacer" />
+                      {g["URL"] ? (
+                        <a
+                          className="btnLink"
+                          href={normalizeUrl(g["URL"]) }
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open Grant
+                        </a>
+                      ) : (
+                        <span style={{ opacity: 0.6 }}>No link</span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -374,5 +337,134 @@ export default function ExplorerPage({ grants, options }: ExplorerPageProps) {
         </main>
       </div>
     </div>
+  );
+}
+
+type GrantsSidebarProps = {
+  grantsCount: number;
+  matches: number;
+  q: string;
+  setQ: Dispatch<SetStateAction<string>>;
+  filters: Filters;
+  setFilters: Dispatch<SetStateAction<Filters>>;
+  resetNonce: number;
+  resetAll: () => void;
+  opt: (key: string) => string[];
+};
+
+function GrantsSidebar({
+  grantsCount,
+  matches,
+  q,
+  setQ,
+  filters,
+  setFilters,
+  resetNonce,
+  resetAll,
+  opt,
+}: GrantsSidebarProps) {
+
+
+  return (
+    <aside className="sidebar">
+      <section className="panel">
+        <div className="panelTitle" style={{ fontWeight: "bold" }}>Filters</div>
+
+        <div className="filterStubsContainer">
+            <FilterStub
+                label="Agency"
+                options={opt("Agency")}
+                values={filters.agency}
+                onChange={(next) => setFilters((f) => ({ ...f, agency: next }))}
+            />
+
+            <FilterStub
+            label="Agency IC"
+            options={opt("Agency IC")}
+            values={filters.agencyIc}
+            onChange={(next) => setFilters((f) => ({ ...f, agencyIc: next }))}
+            />
+
+            <FilterStub
+            label="Objective - General"
+            options={opt("Objective - General")}
+            values={filters.objectiveGeneral}
+            onChange={(next) =>
+                setFilters((f) => ({ ...f, objectiveGeneral: next }))
+            }
+            />
+
+            <FilterStub
+            label="Objective - Specific"
+            options={opt("Objective - Specific")}
+            values={filters.objectiveSpecific}
+            onChange={(next) =>
+                setFilters((f) => ({ ...f, objectiveSpecific: next }))
+            }
+            />
+
+            <FilterStub
+            label="Intervention"
+            options={opt("Intervention")}
+            values={filters.intervention}
+            onChange={(next) =>
+                setFilters((f) => ({ ...f, intervention: next }))
+            }
+            />
+
+            <FilterStub
+            label="Readiness"
+            options={opt("Readiness")}
+            values={filters.readiness}
+            onChange={(next) => setFilters((f) => ({ ...f, readiness: next }))}
+            />
+
+            <FilterStub
+            label="State"
+            options={opt("State")}
+            values={filters.state}
+            onChange={(next) => setFilters((f) => ({ ...f, state: next }))}
+            />
+        </div>
+
+             <RangeSlider
+              key={`year-${resetNonce}`}
+              label="Year"
+              domain={yearDomain}
+              step={1}
+              onChange={(next) =>
+                setFilters((f) => ({ ...f, fiscalYear: next }))
+              }
+            />
+
+            <RangeSlider
+              key={`funding-${resetNonce}`}
+              label="Funding"
+              domain={{ min: 0, max: 6000000 }}
+              step={10000}
+              format={formatUsd}
+              onChange={(next) =>
+                setFilters((f) => ({ ...f, amountUsd: next }))
+              }
+            />
+
+        <div className="resultsBox">
+          <div className="resultsLine">
+            <strong>{matches}</strong> matches out of <strong>{grantsCount}</strong>
+            {q.trim() ? (
+              <span style={{ marginLeft: "0.75rem", opacity: 0.8 }}>
+                Search:&ensp;<code>{q.trim()}</code>
+              </span>
+            ) : null}
+          </div>
+          <div className="resultsButtons">
+            <button className="btn">Download</button>
+            <button className="btn ghost" type="button" onClick={resetAll}>
+              Reset
+            </button>
+          </div>
+        </div>
+      </section>
+    </aside>
   );
 }

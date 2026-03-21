@@ -197,8 +197,6 @@ export default function ExplorerPage({ grants, options }: ExplorerPageProps) {
         <GrantsSidebar
           grantsCount={grants.length}
           matches={matches}
-          q={q}
-          setQ={setQ}
           filters={filters}
           setFilters={setFilters}
           resetNonce={resetNonce}
@@ -208,7 +206,15 @@ export default function ExplorerPage({ grants, options }: ExplorerPageProps) {
         <main className="canvas">
           <div className="canvasHeader">
             <div className="canvasTitle">Explorer</div>
-            <div className="fundingTotal">{totalFunding}</div>
+              <div className="resultsSummary">
+                <strong>{matches}</strong> of <strong>{grants.length}</strong> grants shown
+                {q.trim() ? (
+                  <span style={{ marginLeft: "0.75rem", opacity: 0.8 }}>
+                    Search:&ensp;<code>{q.trim()}</code>
+                  </span>
+                ) : null}
+                <div className="fundingTotal">{totalFunding}</div>
+            </div>
             <button
               type="button"
               className="toggleCardButton"
@@ -230,6 +236,14 @@ export default function ExplorerPage({ grants, options }: ExplorerPageProps) {
                 }}
               />
               <button className="btn ghost">Advanced</button>
+            </div>
+            <div className="resultsToolbar">
+              <div className="resultsButtons">
+                <button className="btn">Download</button>
+                <button className="btn ghost" type="button" onClick={resetAll}>
+                  Reset Filters
+                </button>
+              </div>
             </div>
           </div>
             
@@ -343,8 +357,6 @@ export default function ExplorerPage({ grants, options }: ExplorerPageProps) {
 type GrantsSidebarProps = {
   grantsCount: number;
   matches: number;
-  q: string;
-  setQ: Dispatch<SetStateAction<string>>;
   filters: Filters;
   setFilters: Dispatch<SetStateAction<Filters>>;
   resetNonce: number;
@@ -355,8 +367,6 @@ type GrantsSidebarProps = {
 function GrantsSidebar({
   grantsCount,
   matches,
-  q,
-  setQ,
   filters,
   setFilters,
   resetNonce,
@@ -364,11 +374,10 @@ function GrantsSidebar({
   opt,
 }: GrantsSidebarProps) {
 
-
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" style={{ flex: "0 0 280px", maxWidth: "280px" }}>
       <section className="panel">
-        <div className="panelTitle" style={{ fontWeight: "bold" }}>Filters</div>
+        <div className="panelTitle" style={{ fontWeight: "bold" }}>Refine Results</div>
 
         <div className="filterStubsContainer">
             <FilterStub
@@ -448,22 +457,6 @@ function GrantsSidebar({
               }
             />
 
-        <div className="resultsBox">
-          <div className="resultsLine">
-            <strong>{matches}</strong> matches out of <strong>{grantsCount}</strong>
-            {q.trim() ? (
-              <span style={{ marginLeft: "0.75rem", opacity: 0.8 }}>
-                Search:&ensp;<code>{q.trim()}</code>
-              </span>
-            ) : null}
-          </div>
-          <div className="resultsButtons">
-            <button className="btn">Download</button>
-            <button className="btn ghost" type="button" onClick={resetAll}>
-              Reset
-            </button>
-          </div>
-        </div>
       </section>
     </aside>
   );

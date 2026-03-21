@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "preview": "vite preview",
-    "build:data": "tsx scripts/build-data.ts"
+    "build:data": "tsx scripts/build-data.ts src/assets/data/ODC_grants.xlsx"
   },
   "dependencies": {
     "@vnedyalk0v/react19-simple-maps": "^2.0.2",

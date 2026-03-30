@@ -231,10 +231,38 @@ button:hover {
 
 /* FilterStub styling for readability */
 .filterStub {
+  width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 12px;
-  padding: 0.6rem;
   background: rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+.filterStub .dropdownToggle {
+  width: 100%;
+  min-height: 52px;
+  padding: 0.6rem 2.5rem 0.6rem 0.75rem;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}
+
+.filterStub .dropdown-toggle::after {
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.filterStub .dropdownToggle:hover,
+.filterStub .dropdownToggle:focus,
+.filterStub .dropdownToggle:active,
+.filterStub .dropdown.show .dropdownToggle {
+  border: 0;
+  background: rgba(15, 18, 36, 0.35);
+  box-shadow: none;
 }
 
 .filterLabelRow {
@@ -422,6 +450,17 @@ button:hover {
 .searchInput:focus {
   border-color: rgba(84, 139, 244, 0.95);
   box-shadow: 0 0 0 4px rgba(84, 139, 244, 0.18);
+}
+
+select.searchInput {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2.6rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.82)' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.95rem center;
+  background-size: 12px 8px;
 }
 
 .canvasBody {
@@ -755,5 +794,126 @@ button:hover {
   .grantRow .cell.amount,
   .grantRow .cell.link {
     display: none;
+  }
+}
+
+/* =============================
+   Gap Finder styles
+   ============================= */
+.gapFinderSummary {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.gapFinderControls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin: 0 1rem 1rem;
+}
+
+.gapFinderControl {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.gapFinderMetaRow {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 0 1rem 1rem;
+  opacity: 0.86;
+  font-size: 0.95rem;
+}
+
+.gapFinderTableShell {
+  overflow: auto;
+  margin: 0 1rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.gapFinderTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.gapFinderCornerHeader {
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  text-align: left;
+  padding: 0.9rem;
+  background: rgba(18, 21, 38, 0.97);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gapFinderColumnHeader {
+  min-width: 140px;
+  max-width: 140px;
+  vertical-align: bottom;
+  text-align: left;
+  padding: 0.9rem 0.75rem;
+  background: rgba(18, 21, 38, 0.97);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gapFinderRowHeader {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  text-align: left;
+  padding: 0.85rem 0.9rem;
+  background: rgba(14, 16, 30, 0.98);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 240px;
+  max-width: 240px;
+}
+
+.gapFinderHeaderLabel {
+  font-weight: 600;
+}
+
+.gapFinderHeaderSubtext {
+  font-size: 0.8rem;
+  opacity: 0.72;
+  margin-top: 0.25rem;
+}
+
+.gapFinderCell {
+  padding: 0.35rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.gapFinderCellCard {
+  min-height: 76px;
+  border-radius: 14px;
+  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.gapFinderCellCount {
+  font-size: 0.78rem;
+  opacity: 0.82;
+}
+
+.gapFinderCellValue {
+  font-size: 0.96rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+@media (max-width: 768px) {
+  .gapFinderControls,
+  .gapFinderMetaRow,
+  .gapFinderTableShell {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
   }
 }

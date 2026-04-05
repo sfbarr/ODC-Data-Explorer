@@ -51,11 +51,6 @@ export default function App() {
     load();
   }, []);
 
-  // Show something until succesful population
-  if (error) return <div>Error: {error} </div>;
-  if (!grants || !options) return <div>Loading…</div>;
-
-
   // set title based on tab value
   useEffect(() => {
     const tabTitle =
@@ -69,6 +64,11 @@ export default function App() {
 
     document.title = `SCI Data Explorer | ${tabTitle}`;
   }, [tab]);
+
+  // Show something until succesful population
+  if (error) return <div>Error: {error} </div>;
+  if (!grants || !options) return <div>Loading…</div>;
+
 
   return (
     <div className="app">

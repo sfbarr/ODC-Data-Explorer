@@ -121,7 +121,7 @@ button:hover {
   /* Always 3 equal columns */
   width: min(640px, 92vw);
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
 
   justify-self: center;
   margin: 0;
@@ -871,10 +871,13 @@ select.searchInput {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   min-width: 240px;
   max-width: 240px;
+  overflow: hidden;
 }
 
 .gapFinderHeaderLabel {
   font-weight: 600;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .gapFinderHeaderSubtext {
@@ -915,5 +918,187 @@ select.searchInput {
   .gapFinderTableShell {
     margin-left: 0.75rem;
     margin-right: 0.75rem;
+  }
+
+  .gapFinderRowHeader {
+    min-width: 150px;
+    max-width: 150px;
+    padding: 0.65rem 0.6rem;
+  }
+
+  .gapFinderCornerHeader {
+    min-width: 150px;
+    max-width: 150px;
+    padding: 0.65rem 0.6rem;
+    font-size: 0.82rem;
+  }
+
+  .gapFinderColumnHeader {
+    min-width: 110px;
+    max-width: 110px;
+    padding: 0.65rem 0.5rem;
+  }
+
+  .gapFinderHeaderLabel {
+    font-size: 0.82rem;
+  }
+
+  .gapFinderHeaderSubtext {
+    font-size: 0.74rem;
+  }
+
+  .gapFinderCellCard {
+    min-height: 60px;
+    padding: 0.5rem;
+  }
+
+  .gapFinderCellCount {
+    font-size: 0.72rem;
+  }
+
+  .gapFinderCellValue {
+    font-size: 0.84rem;
+  }
+}
+
+/* =============================
+   Trend Finder styles
+   ============================= */
+.trendFinderSummary {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.trendFinderControls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 1rem 1rem;
+}
+
+.trendFinderChartShell {
+  margin: 0 1rem 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1rem 0.5rem 0.5rem;
+  overflow: visible;
+}
+
+/* Custom tooltip */
+.trendTooltip {
+  background: rgba(14, 16, 30, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  min-width: 220px;
+  max-width: 340px;
+  backdrop-filter: blur(10px);
+}
+
+.trendTooltipYear {
+  font-family: "league-spartan", sans-serif;
+  font-size: 0.95rem;
+  opacity: 0.85;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.4rem;
+}
+
+.trendTooltipRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+  font-size: 0.88rem;
+}
+
+.trendTooltipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.trendTooltipLabel {
+  flex: 1;
+  opacity: 0.9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trendTooltipValue {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.95;
+  white-space: nowrap;
+}
+
+.trendFinderLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  padding: 0.75rem 0.5rem 0.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  margin-top: 0.5rem;
+}
+
+.trendFinderLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.trendFinderLegendSwatch {
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.trendFinderLegendLabel {
+  white-space: nowrap;
+}
+
+.trendFinderChartArea {
+  height: 480px;
+}
+
+@media (max-width: 768px) {
+  .trendFinderControls,
+  .trendFinderChartShell {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+  }
+
+  .trendFinderControls {
+    margin-top: 0.75rem;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .trendFinderChartArea {
+    height: 320px;
+  }
+
+  .trendTooltip {
+    min-width: 160px;
+    max-width: 240px;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .trendTooltipRow {
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .trendFinderControls {
+    grid-template-columns: 1fr;
+  }
+
+  .trendFinderChartArea {
+    height: 260px;
   }
 }

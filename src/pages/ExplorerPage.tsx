@@ -1,4 +1,5 @@
-import { Dispatch, SetStateAction, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import type { OptionsMap, Filters } from "../types/types";
 import RangeSlider from "../components/RangeSlider";
 import FilterStub from "../components/FilterStub";
@@ -195,12 +196,9 @@ export default function ExplorerPage({ grants, options }: ExplorerPageProps) {
         
       <div className="layout">
         <GrantsSidebar
-          grantsCount={grants.length}
-          matches={matches}
           filters={filters}
           setFilters={setFilters}
           resetNonce={resetNonce}
-          resetAll={resetAll}
           opt={opt}
         />
         <main className="canvas">
@@ -355,22 +353,16 @@ export default function ExplorerPage({ grants, options }: ExplorerPageProps) {
 }
 
 type GrantsSidebarProps = {
-  grantsCount: number;
-  matches: number;
   filters: Filters;
   setFilters: Dispatch<SetStateAction<Filters>>;
   resetNonce: number;
-  resetAll: () => void;
   opt: (key: string) => string[];
 };
 
 function GrantsSidebar({
-  grantsCount,
-  matches,
   filters,
   setFilters,
   resetNonce,
-  resetAll,
   opt,
 }: GrantsSidebarProps) {
 

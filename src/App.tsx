@@ -3,9 +3,11 @@ import "./App.css";
 import odcLogo from "./assets/odc-centered-logo.png";  // ODC logo 
 import ExplorerPage from "./pages/ExplorerPage";
 import CureMapPage from "./pages/CureMapPage";
+import GapFinderPage from "./pages/GapFinderPage";
+import TrendFinderPage from "./pages/TrendFinderPage";
 
 // Tab View state (1 of 3 possible values)
-type Tab = "explorer" | "cure-map" | "gap-finder";
+type Tab = "explorer" | "cure-map" | "gap-finder" | "trend-finder";
 
 // Scaffolding for the collected filters 
 type OptionsMap = Record<string, string[]>;
@@ -54,10 +56,19 @@ export default function App() {
   if (!grants || !options) return <div>Loading…</div>;
 
 
-  // Set title based on the 3 allowed tab states
-  let tabTitle = "Explorer";
-  if (tab === "cure-map") tabTitle = "Cure Map";
-  if (tab === "gap-finder") tabTitle = "Gap Finder";
+  // set title based on tab value
+  useEffect(() => {
+    const tabTitle =
+      tab === "cure-map"
+        ? "Cure Map"
+        : tab === "gap-finder"
+          ? "Gap Finder"
+          : tab === "trend-finder"
+            ? "Trend Finder"
+            : "Explorer";
+
+    document.title = `SCI Data Explorer | ${tabTitle}`;
+  }, [tab]);
 
   return (
     <div className="app">
@@ -81,15 +92,17 @@ export default function App() {
           <button className={tab === "gap-finder" ? "active" : ""} onClick={() => setTab("gap-finder")}>
             Gap Finder
           </button>
+          <button className={tab == "trend-finder" ? "active" : ""} onClick={() => setTab("trend-finder")}>
+            Trend Finder
+          </button>
         </nav>
 
       </header>
       <div className="canvasBody">
         {tab === "explorer" && <ExplorerPage grants={grants} options={options} />}
         {tab === "cure-map" && <CureMapPage grants={grants} />}
-        {tab === "gap-finder" && (
-          <div className="placeholder">Heatmap/pivot view will render here.</div>
-        )}
+        {tab === "gap-finder" && <GapFinderPage grants={grants} />}
+        {tab === "trend-finder" && <TrendFinderPage grants={grants} />} 
       </div>
     </div>
   );

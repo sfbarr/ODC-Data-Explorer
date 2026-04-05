@@ -14,7 +14,6 @@ type AxisOption = {
 
 type MetricKey = "count" | "funding";
 
-type SortMode = "total" | "alphabetical";
 
 type CellStats = {
   count: number;
@@ -119,8 +118,7 @@ function buildMatrix(
   xKey: string,
   yKey: string,
   maxColumns: number,
-  maxRows: number,
-  sortMode: SortMode
+  maxRows: number
 ): MatrixBuildResult {
   const matrix: Record<string, Record<string, CellStats>> = {};
   const rowTotals: Record<string, CellStats> = {};
@@ -214,7 +212,6 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
   const [xKey, setXKey] = useState<string>(DEFAULT_X_KEY);
   const [yKey, setYKey] = useState<string>(DEFAULT_Y_KEY);
   const [metric, setMetric] = useState<MetricKey>("funding");
-  const [sortMode, setSortMode] = useState<SortMode>("total");
   const [stateFilter, setStateFilter] = useState<string>("All states");
   const [agencyFilter, setAgencyFilter] = useState<string>("All agencies");
   const [yearRange, setYearRange] = useState<YearRange>(yearDomain);
@@ -235,8 +232,8 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
   }, [grants, stateFilter, agencyFilter, yearRange]);
 
   const matrixData = useMemo(
-    () => buildMatrix(filteredGrants, xKey, yKey, 12, 18, sortMode),
-    [filteredGrants, xKey, yKey, sortMode]
+    () => buildMatrix(filteredGrants, xKey, yKey, 12, 18),
+    [filteredGrants, xKey, yKey]
   );
 
   const activeMax = metric === "funding" ? matrixData.maxFunding : matrixData.maxCount;

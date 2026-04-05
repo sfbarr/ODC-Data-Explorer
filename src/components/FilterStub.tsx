@@ -1,5 +1,5 @@
+import { useEffect, useRef, useState } from "react";
 import type { FilterStubProps } from "../types/types";
-import Dropdown from "react-bootstrap/Dropdown";
 
 export default function FilterStub({
   label,
@@ -7,49 +7,70 @@ export default function FilterStub({
   values,
   onChange,
 }: FilterStubProps) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close when clicking outside
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
   const toggle = (opt: string) => {
     const next = values.includes(opt)
       ? values.filter((v) => v !== opt)
       : [...values, opt];
-
     onChange(next);
   };
 
-  const clear = () => {
-    onChange([]);
-  };
-
   return (
-    <div className="filterStub">
-      <Dropdown autoClose="outside" className="dropdown">
-        <Dropdown.Toggle className="dropdownToggle">
-          {label}{values.length ? ` | ${values.length}` : ""}
-        </Dropdown.Toggle>
+    <div className="filterStub" ref={containerRef}>
+      <button
+        type="button"
+        className="dropdownToggle"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+      >
+        <span className="filterLabelRow">
+          <span className="filterLabel">{label}</span>
+          {values.length > 0 && (
+            <span className="filterCount">{values.length} selected</span>
+          )}
+        </span>
+        <span className={`filterChevron${open ? " open" : ""}`}>›</span>
+      </button>
 
-        <Dropdown.Menu className="filterMenu">
-          {options.map((opt) => {
-            const active = values.includes(opt);
-
-            return (
-              <Dropdown.Item
-                className={active ? "filterOption active" : "filterOption"}
+      {open && (
+        <div className="filterMenu">
+          <div className="filterOptions">
+            {options.map((opt) => (
+              <button
                 key={opt}
-                as="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggle(opt);
-                }}
+                type="button"
+                className={`filterOption${values.includes(opt) ? " active" : ""}`}
+                onClick={() => toggle(opt)}
               >
                 {opt}
-              </Dropdown.Item>
-            );
-          })}
-
-          <hr />
-          <Dropdown.Item onClick={clear}>Clear</Dropdown.Item>
-        </Dropdown.Menu>
-      </Dropdown>
+              </button>
+            ))}
+          </div>
+          {values.length > 0 && (
+            <button
+              type="button"
+              className="filterClear"
+              onClick={() => onChange([])}
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

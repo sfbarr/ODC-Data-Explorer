@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { Filters, OptionsMap } from "../types/types";
 import FilterStub from "./FilterStub";
+import DualFilterStub from "./DualFilterStub";
 import RangeSlider from "./RangeSlider";
 import { downloadCsv, todaySlug } from "../utils/download";
 
@@ -62,41 +63,32 @@ export default function GrantsSidebar({
             values={filters.agencyIc}
             onChange={(next) => setFilters((f) => ({ ...f, agencyIc: next }))}
           />
-          <FilterStub
-            label="Objective — General"
-            options={opt("Objective - General")}
-            values={filters.objectiveGeneral}
-            onChange={(next) => setFilters((f) => ({ ...f, objectiveGeneral: next }))}
+          <DualFilterStub
+            label="Objective"
+            generalOptions={opt("Objective - General")}
+            specificOptions={opt("Objective - Specific")}
+            generalValues={filters.objectiveGeneral}
+            specificValues={filters.objectiveSpecific}
+            onGeneralChange={(next) => setFilters((f) => ({ ...f, objectiveGeneral: next }))}
+            onSpecificChange={(next) => setFilters((f) => ({ ...f, objectiveSpecific: next }))}
           />
-          <FilterStub
-            label="Objective — Specific"
-            options={opt("Objective - Specific")}
-            values={filters.objectiveSpecific}
-            onChange={(next) => setFilters((f) => ({ ...f, objectiveSpecific: next }))}
+          <DualFilterStub
+            label="Intervention"
+            generalOptions={opt("Intervention - General")}
+            specificOptions={opt("Intervention - Specific")}
+            generalValues={filters.interventionGeneral}
+            specificValues={filters.interventionSpecific}
+            onGeneralChange={(next) => setFilters((f) => ({ ...f, interventionGeneral: next }))}
+            onSpecificChange={(next) => setFilters((f) => ({ ...f, interventionSpecific: next }))}
           />
-          <FilterStub
-            label="Intervention — General"
-            options={opt("Intervention - General")}
-            values={filters.interventionGeneral}
-            onChange={(next) => setFilters((f) => ({ ...f, interventionGeneral: next }))}
-          />
-          <FilterStub
-            label="Intervention — Specific"
-            options={opt("Intervention - Specific")}
-            values={filters.interventionSpecific}
-            onChange={(next) => setFilters((f) => ({ ...f, interventionSpecific: next }))}
-          />
-          <FilterStub
-            label="Readiness — General"
-            options={opt("Readiness - General")}
-            values={filters.readinessGeneral}
-            onChange={(next) => setFilters((f) => ({ ...f, readinessGeneral: next }))}
-          />
-          <FilterStub
-            label="Readiness — Specific"
-            options={opt("Readiness - Specific")}
-            values={filters.readinessSpecific}
-            onChange={(next) => setFilters((f) => ({ ...f, readinessSpecific: next }))}
+          <DualFilterStub
+            label="Readiness"
+            generalOptions={opt("Readiness - General")}
+            specificOptions={opt("Readiness - Specific")}
+            generalValues={filters.readinessGeneral}
+            specificValues={filters.readinessSpecific}
+            onGeneralChange={(next) => setFilters((f) => ({ ...f, readinessGeneral: next }))}
+            onSpecificChange={(next) => setFilters((f) => ({ ...f, readinessSpecific: next }))}
           />
           <FilterStub
             label="State"

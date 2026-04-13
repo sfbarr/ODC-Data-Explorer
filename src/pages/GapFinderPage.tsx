@@ -256,14 +256,12 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
             Cross-tab coverage across <strong>{AXIS_OPTIONS.find((option) => option.key === xKey)?.label}</strong> and{" "}
             <strong>{AXIS_OPTIONS.find((option) => option.key === yKey)?.label}</strong>
           </span>
-          <div className="fundingTotal">
-            {metric === "funding"
-              ? `${formatCompactCurrency(totalFilteredFunding)} shown`
-              : `${totalFilteredCount.toLocaleString()} grants shown`}
-          </div>
-        </div>
-        <div className="resultsToolbar">
-          <div className="resultsButtons">
+          <div className="gapFinderHeaderRight">
+            <span className="fundingTotal" style={{ marginLeft: 0 }}>
+              {metric === "funding"
+                ? `${formatCompactCurrency(totalFilteredFunding)} shown`
+                : `${totalFilteredCount.toLocaleString()} grants shown`}
+            </span>
             <button
               type="button"
               className="btn"

@@ -824,6 +824,15 @@ select.searchInput {
   justify-content: space-between;
 }
 
+/* Funding total + download button grouped on the right of the GapFinder header */
+.gapFinderHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .gapFinderControls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

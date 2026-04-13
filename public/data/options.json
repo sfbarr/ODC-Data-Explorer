@@ -32,7 +32,20 @@
     "RX",
     "SCIRP"
   ],
-  "Intervention": [
+  "Intervention - General": [
+    "Activity & lifestyle",
+    "Assistive devices",
+    "Biologics interventions",
+    "Device interventions (neuromodulatory)",
+    "Discovery",
+    "Drug interventions",
+    "Individual & community",
+    "Other",
+    "Resources/other",
+    "Surgical interventions",
+    "Tools and technology"
+  ],
+  "Intervention - Specific": [
     "Assistive Tools",
     "Biomaterials",
     "Cell/Tissue Therapies",
@@ -60,13 +73,13 @@
   "Objective - General": [
     "Acute SCI Management",
     "Infrastructure",
-    "Other SCI Studies",
+    "Other SCI studies",
     "SCI Adjacent",
     "SCI Motor/Sensory Function",
     "SCI Pathology & Repair",
     "SCI Secondary Health Conditions",
     "Sociological",
-    "Unable to Classify"
+    "Unable to classify"
   ],
   "Objective - Specific": [
     "Acute SCI Management",
@@ -107,7 +120,14 @@
     "Unable to Classify",
     "Upper Limb/Forelimb"
   ],
-  "Readiness": [
+  "Readiness - General": [
+    "Applied Research (Animal Models)",
+    "Applied Research (Clinical Studies)",
+    "Basic Research",
+    "Infrastructure",
+    "Other"
+  ],
+  "Readiness - Specific": [
     "Basic-Basic",
     "Clinical (Phase 0 or EFS)",
     "Clinical (Phase I, II, FS)",
@@ -124,14 +144,17 @@
     "AR",
     "AU",
     "AZ",
+    "BC",
     "CA",
     "CAN",
+    "CH",
     "CO",
     "CT",
     "DC",
     "DE",
     "EU",
     "FL",
+    "FR",
     "GA",
     "IA",
     "IL",
@@ -158,8 +181,10 @@
     "OR",
     "PA",
     "PR",
+    "QC",
     "RI",
     "SC",
+    "SW",
     "TN",
     "TX",
     "UK",

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import RangeSlider from "../components/RangeSlider";
+import { downloadCsv, todaySlug } from "../utils/download";
 
 type GrantRecord = Record<string, unknown>;
 
@@ -36,13 +37,16 @@ type YearRange = {
 };
 
 const AXIS_OPTIONS: AxisOption[] = [
-  { key: "Objective - General", label: "Objective" },
-  { key: "Intervention", label: "Intervention" },
-  { key: "Readiness", label: "Readiness" },
+  { key: "Objective - General",     label: "Objective (General)" },
+  { key: "Objective - Specific",    label: "Objective (Specific)" },
+  { key: "Intervention - General",  label: "Intervention (General)" },
+  { key: "Intervention - Specific", label: "Intervention (Specific)" },
+  { key: "Readiness - General",     label: "Readiness (General)" },
+  { key: "Readiness - Specific",    label: "Readiness (Specific)" },
 ];
 
 const DEFAULT_X_KEY = "Objective - General";
-const DEFAULT_Y_KEY = "Intervention";
+const DEFAULT_Y_KEY = "Intervention - General";
 
 function normalizeCategory(value: unknown): string {
   if (value === null || value === undefined) return "Unspecified";
@@ -256,6 +260,18 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
             {metric === "funding"
               ? `${formatCompactCurrency(totalFilteredFunding)} shown`
               : `${totalFilteredCount.toLocaleString()} grants shown`}
+          </div>
+        </div>
+        <div className="resultsToolbar">
+          <div className="resultsButtons">
+            <button
+              type="button"
+              className="btn"
+              disabled={filteredGrants.length === 0}
+              onClick={() => downloadCsv(filteredGrants, `sci-grants-gapfinder-${todaySlug()}.csv`)}
+            >
+              Download {filteredGrants.length > 0 ? `${filteredGrants.length.toLocaleString()} ` : ""}CSV
+            </button>
           </div>
         </div>
       </div>

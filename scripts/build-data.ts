@@ -89,8 +89,9 @@ function explodeCell(v: unknown, column: string): string[] {
   // This keeps values like `Clinical (Phase I, II, FS)` intact.
   let delims = new Set([";", "|", "\n"]);
 
-  // Columns that intentionally use comma-separated lists
-  if (col.includes("agency ic") || col.includes("objective") || col.includes("intervention")) {
+  // Only Agency IC uses genuine comma-separated multi-values.
+  // Objective/Intervention/Readiness columns are single values (commas only appear inside parens).
+  if (col.includes("agency ic")) {
     delims = new Set([",", ";", "|", "\n"]);
   }
 
@@ -123,8 +124,10 @@ const FILTERABLE_COLUMNS = new Set([
   "Agency IC",
   "Objective - General",
   "Objective - Specific",
-  "Intervention",
-  "Readiness",
+  "Intervention - General",
+  "Intervention - Specific",
+  "Readiness - General",
+  "Readiness - Specific",
   "State",
 ]);
 

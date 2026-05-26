@@ -28,6 +28,10 @@ const normalizeUrl = (u: unknown) => {
 export default function ExplorerPage({ grants, totalGrants, q }: ExplorerPageProps) {
   type ViewMode = "sheet" | "cards";
   const [view, setView] = useState<ViewMode>("sheet");
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+
+  const rowKey = (g: any, idx: number) =>
+    g.id ?? `${g["Project Title"] ?? "grant"}-${idx}`;
 
   const totalFunding = useMemo(() => {
     let total = 0;
@@ -79,39 +83,71 @@ export default function ExplorerPage({ grants, totalGrants, q }: ExplorerPagePro
               <div className="col link">Link</div>
             </div>
 
-            {grants.map((g: any, idx: number) => (
-              <div
-                className="grantRow"
-                key={g.id ?? `${g["Project Title"] ?? "grant"}-${idx}`}
-              >
-                <div className="cell title" title={g["Project Title"] ?? ""}>
-                  {g["Project Title"] ?? "(untitled)"}
+            {grants.map((g: any, idx: number) => {
+              const key = rowKey(g, idx);
+              const isExpanded = expandedKey === key;
+              const toggle = () => setExpandedKey(isExpanded ? null : key);
+              return (
+                <div
+                  className={`grantRow${isExpanded ? " expanded" : ""}`}
+                  key={key}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
+                  onClick={toggle}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggle();
+                    }
+                  }}
+                >
+                  <div className="cell title" title={g["Project Title"] ?? ""}>
+                    {g["Project Title"] ?? "(untitled)"}
+                  </div>
+                  <div className="cell year">{g["Fiscal Year"] ?? "—"}</div>
+                  <div className="cell agency">{g["Agency"] ?? "—"}</div>
+                  <div className="cell amount">
+                    {g["Amount"] != null ? formatUsd(parseAmount(g["Amount"])) : "—"}
+                  </div>
+                  <div className="cell state">{g["State"] ?? "—"}</div>
+                  <div className="cell mechanism" title={g["Mechanism"] ?? ""}>
+                    {g["Mechanism"] ?? "—"}
+                  </div>
+                  <div className="cell link" onClick={(e) => e.stopPropagation()}>
+                    {g["URL"] ? (
+                      <a
+                        className="pillLink"
+                        href={normalizeUrl(g["URL"])}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open
+                      </a>
+                    ) : (
+                      <span style={{ opacity: 0.6 }}>—</span>
+                    )}
+                  </div>
+
+                  {isExpanded ? (
+                    <div className="grantRowExpanded">
+                      <div className="grantRowExpandedDetails">
+                        <div><span className="label">PI:</span> {g["PI"] ?? "—"}</div>
+                        <div><span className="label">Org:</span> {g["Organization"] ?? "—"}</div>
+                        <div><span className="label">Agency IC:</span> {g["Agency IC"] ?? "—"}</div>
+                        <div><span className="label">Mechanism:</span> {g["Mechanism"] ?? "—"}</div>
+                      </div>
+                      {g["Project Abstract"] ? (
+                        <div className="grantRowExpandedAbstract">
+                          {String(g["Project Abstract"]).slice(0, 600)}
+                          {String(g["Project Abstract"]).length > 600 ? "…" : ""}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
-                <div className="cell year">{g["Fiscal Year"] ?? "—"}</div>
-                <div className="cell agency">{g["Agency"] ?? "—"}</div>
-                <div className="cell amount">
-                  {g["Amount"] != null ? formatUsd(parseAmount(g["Amount"])) : "—"}
-                </div>
-                <div className="cell state">{g["State"] ?? "—"}</div>
-                <div className="cell mechanism" title={g["Mechanism"] ?? ""}>
-                  {g["Mechanism"] ?? "—"}
-                </div>
-                <div className="cell link">
-                  {g["URL"] ? (
-                    <a
-                      className="pillLink"
-                      href={normalizeUrl(g["URL"])}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Open
-                    </a>
-                  ) : (
-                    <span style={{ opacity: 0.6 }}>—</span>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="grantCards">

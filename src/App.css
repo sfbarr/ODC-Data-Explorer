@@ -653,7 +653,7 @@ select.searchInput {
 .grantSheetHeader,
 .grantRow {
   display: grid;
-  grid-template-columns: 1.6fr 84px 160px 140px 70px 200px 78px;
+  grid-template-columns: minmax(0, 2.6fr) 64px 72px 110px 56px 130px 72px;
   gap: 0.75rem;
   padding: 0.65rem 0.75rem;
   border-radius: 12px;
@@ -670,11 +670,48 @@ select.searchInput {
 .grantRow {
   background: rgba(0, 0, 0, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.10);
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
 
 .grantRow:hover {
   border-color: rgba(84, 139, 244, 0.55);
   background: rgba(15, 18, 36, 0.55);
+}
+
+.grantRow.expanded {
+  background: rgba(15, 18, 36, 0.65);
+  border-color: rgba(84, 139, 244, 0.55);
+}
+
+.grantRow.expanded .cell.title {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.grantRowExpanded {
+  grid-column: 1 / -1;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  display: grid;
+  gap: 0.55rem;
+}
+
+.grantRowExpandedDetails {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 6px 14px;
+  font-size: 0.92rem;
+}
+
+.grantRowExpandedAbstract {
+  opacity: 0.9;
+  line-height: 1.45;
+  font-size: 0.92rem;
 }
 
 /* Title + agency + mechanism ellipsis */
@@ -835,7 +872,7 @@ select.searchInput {
 @media (max-width: 900px) {
   .grantSheetHeader,
   .grantRow {
-    grid-template-columns: 1.6fr 84px 160px 140px 78px;
+    grid-template-columns: minmax(0, 2.6fr) 64px 72px 110px 72px;
   }
 
   .grantSheetHeader .col.state,

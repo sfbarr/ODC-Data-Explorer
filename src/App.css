@@ -100,11 +100,11 @@
 
 /* league spartan */
 @font-face {
-  font-family: swap;
+  font-display: swap;
   font-family: "league-spartan";
   font-style: normal;
   font-weight: 400;
-  src: url("./assets/fonts/league-spartan-normal-100\\ 900.woff2");
+  src: url("./assets/fonts/league-spartan-normal-100 900.woff2");
 }
 
 /* Global layout sanity: avoid tiny horizontal scroll/offset on mobile */
@@ -187,7 +187,7 @@ button:hover {
 
  /* ------- main page, below tabs ------- */
 .layout {
-  width: min(1500px, 96vw);
+  width: min(1800px, 95vw);
   margin: 1.25rem auto 1.25rem;
 
   display: flex;
@@ -197,14 +197,14 @@ button:hover {
 
 /* Gap Finder renders without the sidebar layout — give it matching outer spacing */
 .gapFinderWrapper {
-  width: min(1500px, 96vw);
+  width: min(1800px, 95vw);
   margin: 1.25rem auto 1.25rem;
 }
 
 /* Sidebar is just a container (no card styling, no scrolling) */
 .sidebar {
-  flex: 0 0 clamp(300px, 32vw, 480px); /* wider */
-  max-width: 520px;
+  flex: 0 0 clamp(260px, 20vw, 340px);
+  max-width: 360px;
 
   position: sticky;
   top: 1rem;
@@ -343,6 +343,8 @@ button:hover {
 .filterCount {
   font-size: 0.85rem;
   opacity: 0.75;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Chevron indicator */
@@ -653,7 +655,7 @@ select.searchInput {
 .grantSheetHeader,
 .grantRow {
   display: grid;
-  grid-template-columns: minmax(0, 2.6fr) 64px 72px 110px 56px 130px 72px;
+  grid-template-columns: minmax(0, 2.6fr) 64px 6ch 110px 56px 5ch 72px;
   gap: 0.75rem;
   padding: 0.65rem 0.75rem;
   border-radius: 12px;
@@ -872,7 +874,7 @@ select.searchInput {
 @media (max-width: 900px) {
   .grantSheetHeader,
   .grantRow {
-    grid-template-columns: minmax(0, 2.6fr) 64px 72px 110px 72px;
+    grid-template-columns: minmax(0, 2.6fr) 64px 6ch 110px 72px;
   }
 
   .grantSheetHeader .col.state,
@@ -918,14 +920,35 @@ select.searchInput {
 
 .gapFinderControls {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.75rem;
   margin: 1.1rem 1rem 1rem;
+  position: relative;
+  z-index: 5;
 }
 
 .gapFinderControl {
   display: grid;
   gap: 0.35rem;
+}
+
+/* GapFinder canvas needs to let SingleSelectStub dropdowns escape its bounds.
+   The inner gapFinderTableShell handles its own overflow. */
+.gapFinderWrapper .canvas {
+  overflow: visible;
+}
+
+/* SingleSelect dropdowns in the GapFinder fill their grid cell vertically,
+   so the toggle (button) matches the year-range slider's full height with
+   its text vertically centered inside. */
+.singleSelectStub {
+  height: 100%;
+}
+
+.singleSelectStub .dropdownToggle {
+  min-height: 0;
+  height: 100%;
+  padding: 0.3rem 0.75rem;
 }
 
 .gapFinderMetaRow {

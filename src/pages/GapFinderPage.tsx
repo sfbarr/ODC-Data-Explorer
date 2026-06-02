@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import RangeSlider from "../components/RangeSlider";
+import SingleSelectStub from "../components/SingleSelectStub";
 import { downloadCsv, todaySlug } from "../utils/download";
 
 type GrantRecord = Record<string, unknown>;
@@ -275,100 +276,71 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
       </div>
 
       <div className="gapFinderControls">
-        <label htmlFor="gapfinder-x-axis" className="gapFinderControl">
-          <span>X Axis</span>
-          <select
-            id="gapfinder-x-axis"
-            name="gapfinder-x-axis"
-            className="searchInput"
+        <div className="gapFinderControl">
+          <SingleSelectStub
+            label="X Axis"
             value={xKey}
-            onChange={(e) => {
-              const nextX = e.target.value;
+            options={AXIS_OPTIONS.filter(
+              (option) => option.key !== yKey || option.key === xKey
+            ).map((option) => ({ value: option.key, label: option.label }))}
+            onChange={(nextX) => {
               setXKey(nextX);
               if (nextX === yKey) setYKey(getAlternateAxisKey(nextX));
             }}
-          >
-            {AXIS_OPTIONS.filter((option) => option.key !== yKey || option.key === xKey).map((option) => (
-              <option key={`x-${option.key}`} value={option.key}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+          />
+        </div>
 
-        <label htmlFor="gapfinder-y-axis" className="gapFinderControl">
-          <span>Y Axis</span>
-          <select
-            id="gapfinder-y-axis"
-            name="gapfinder-y-axis"
-            className="searchInput"
+        <div className="gapFinderControl">
+          <SingleSelectStub
+            label="Y Axis"
             value={yKey}
-            onChange={(e) => {
-              const nextY = e.target.value;
+            options={AXIS_OPTIONS.filter(
+              (option) => option.key !== xKey || option.key === yKey
+            ).map((option) => ({ value: option.key, label: option.label }))}
+            onChange={(nextY) => {
               setYKey(nextY);
               if (nextY === xKey) setXKey(getAlternateAxisKey(nextY));
             }}
-          >
-            {AXIS_OPTIONS.filter((option) => option.key !== xKey || option.key === yKey).map((option) => (
-              <option key={`y-${option.key}`} value={option.key}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+          />
+        </div>
 
-        <label htmlFor="gapfinder-state-filter" className="gapFinderControl">
-          <span>State</span>
-          <select
-            id="gapfinder-state-filter"
-            name="gapfinder-state-filter"
-            className="searchInput"
+        <div className="gapFinderControl">
+          <SingleSelectStub
+            label="State"
             value={stateFilter}
-            onChange={(e) => setStateFilter(e.target.value)}
-          >
-            <option value="All states">All states</option>
-            {stateOptions.map((state) => (
-              <option key={`state-${state}`} value={state}>
-                {state}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={[
+              { value: "All states", label: "All states" },
+              ...stateOptions.map((s) => ({ value: s, label: s })),
+            ]}
+            onChange={setStateFilter}
+          />
+        </div>
 
-        <label htmlFor="gapfinder-agency-filter" className="gapFinderControl">
-          <span>Agency</span>
-          <select
-            id="gapfinder-agency-filter"
-            name="gapfinder-agency-filter"
-            className="searchInput"
+        <div className="gapFinderControl">
+          <SingleSelectStub
+            label="Agency"
             value={agencyFilter}
-            onChange={(e) => setAgencyFilter(e.target.value)}
-          >
-            <option value="All agencies">All agencies</option>
-            {agencyOptions.map((agency) => (
-              <option key={`agency-${agency}`} value={agency}>
-                {agency}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={[
+              { value: "All agencies", label: "All agencies" },
+              ...agencyOptions.map((a) => ({ value: a, label: a })),
+            ]}
+            onChange={setAgencyFilter}
+          />
+        </div>
 
-        <label htmlFor="gapfinder-metric" className="gapFinderControl">
-          <span>Metric</span>
-          <select
-            id="gapfinder-metric"
-            name="gapfinder-metric"
-            className="searchInput"
+        <div className="gapFinderControl">
+          <SingleSelectStub
+            label="Metric"
             value={metric}
-            onChange={(e) => setMetric(e.target.value as MetricKey)}
-          >
-            <option value="funding">Total Funding</option>
-            <option value="count">Grant Count</option>
-          </select>
-        </label>
+            options={[
+              { value: "funding", label: "Total Funding" },
+              { value: "count", label: "Grant Count" },
+            ]}
+            onChange={(v) => setMetric(v as MetricKey)}
+          />
+        </div>
 
         <div className="gapFinderControl gapFinderYearControl">
-          <span>Fiscal Year Range</span>
           <RangeSlider
             label="Year"
             domain={yearDomain}
@@ -376,8 +348,6 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
             onChange={(nextRange) => setYearRange(nextRange)}
           />
         </div>
-
-
       </div>
 
       <div className="gapFinderMetaRow">

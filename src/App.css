@@ -343,6 +343,8 @@ button:hover {
 .filterCount {
   font-size: 0.85rem;
   opacity: 0.75;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Chevron indicator */
@@ -653,7 +655,7 @@ select.searchInput {
 .grantSheetHeader,
 .grantRow {
   display: grid;
-  grid-template-columns: minmax(0, 2.6fr) 64px 72px 110px 56px 130px 72px;
+  grid-template-columns: minmax(0, 2.6fr) 64px 6ch 110px 56px 5ch 72px;
   gap: 0.75rem;
   padding: 0.65rem 0.75rem;
   border-radius: 12px;
@@ -872,7 +874,7 @@ select.searchInput {
 @media (max-width: 900px) {
   .grantSheetHeader,
   .grantRow {
-    grid-template-columns: minmax(0, 2.6fr) 64px 72px 110px 72px;
+    grid-template-columns: minmax(0, 2.6fr) 64px 6ch 110px 72px;
   }
 
   .grantSheetHeader .col.state,

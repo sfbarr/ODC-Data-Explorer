@@ -11,6 +11,16 @@ import { EMPTY_FILTERS } from "./types/types";
 
 type Tab = "explorer" | "cure-map" | "gap-finder" | "trend-finder";
 
+// Empty trailing spreadsheet columns arrive as "__EMPTY", "__EMPTY_1", … — strip them.
+const stripJunkColumns = (row: Record<string, unknown>) => {
+  const clean: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(row)) {
+    if (/^__EMPTY/.test(k)) continue;
+    clean[k] = v;
+  }
+  return clean;
+};
+
 export default function App() {
   const [tab, setTab] = useState<Tab>("explorer");
   const [grants, setGrants] = useState<any[] | null>(null);
@@ -37,7 +47,10 @@ export default function App() {
         ]);
         if (!gRes.ok) throw new Error(`grants.json failed: ${gRes.status}`);
         if (!oRes.ok) throw new Error(`options.json failed: ${oRes.status}`);
-        setGrants(await gRes.json());
+        const rawGrants: any[] = await gRes.json();
+        // Drop empty trailing spreadsheet columns ("__EMPTY", "__EMPTY_1", …)
+        // baked into the shipped data so they don't leak into the UI or CSV exports.
+        setGrants(rawGrants.map(stripJunkColumns));
         setOptions(await oRes.json());
       } catch (e) {
         setError(e instanceof Error ? e.message : "Unknown error");

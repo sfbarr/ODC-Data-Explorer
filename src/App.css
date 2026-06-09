@@ -716,6 +716,40 @@ select.searchInput {
   font-size: 0.92rem;
 }
 
+/* Sortable column headers */
+.grantSheetHeader .col.sortable {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.grantSheetHeader .col.sortable:hover {
+  color: rgba(132, 159, 244, 0.95);
+}
+
+.grantSheetHeader .col.sortable.sorted {
+  color: rgba(132, 159, 244, 0.95);
+}
+
+/* Right-aligned numeric headers keep their indicator next to the label */
+.grantSheetHeader .col.year.sortable,
+.grantSheetHeader .col.amount.sortable {
+  justify-content: flex-end;
+}
+
+.sortIndicator {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.grantSheetHeader .col.sortable.sorted .sortIndicator {
+  opacity: 0.95;
+}
+
 /* Title + agency + mechanism ellipsis */
 .grantSheetHeader .col.title,
 .grantRow .cell.title,

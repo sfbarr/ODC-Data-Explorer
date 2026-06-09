@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { downloadCsv, todaySlug } from "../utils/download";
 
 type ExplorerPageProps = {
   grants: any[];       // pre-filtered by App
@@ -25,13 +26,73 @@ const normalizeUrl = (u: unknown) => {
   return s.startsWith("http://") || s.startsWith("https://") ? s : `https://${s}`;
 };
 
+// Sortable columns: which grant field backs each, and how to compare it.
+type SortKey = "title" | "year" | "agency" | "amount" | "state" | "mechanism";
+type SortDir = "asc" | "desc";
+
+const SORT_FIELDS: Record<SortKey, { field: string; numeric: boolean }> = {
+  title: { field: "Project Title", numeric: false },
+  year: { field: "Fiscal Year", numeric: true },
+  agency: { field: "Agency", numeric: false },
+  amount: { field: "Amount", numeric: true },
+  state: { field: "State", numeric: false },
+  mechanism: { field: "Mechanism", numeric: false },
+};
+
+// Header columns in display order (the Link column is rendered separately, not sortable).
+const SORTABLE_COLUMNS: { key: SortKey; label: string }[] = [
+  { key: "title", label: "Title" },
+  { key: "year", label: "Year" },
+  { key: "agency", label: "Agency" },
+  { key: "amount", label: "Amount" },
+  { key: "state", label: "State" },
+  { key: "mechanism", label: "Mechanism" },
+];
+
 export default function ExplorerPage({ grants, totalGrants, q }: ExplorerPageProps) {
   type ViewMode = "sheet" | "cards";
   const [view, setView] = useState<ViewMode>("sheet");
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const rowKey = (g: any, idx: number) =>
     g.id ?? `${g["Project Title"] ?? "grant"}-${idx}`;
+
+  // Click a header to cycle: unsorted → ascending → descending → unsorted.
+  const onSort = (key: SortKey) => {
+    if (sortKey !== key) {
+      setSortKey(key);
+      setSortDir("asc");
+    } else if (sortDir === "asc") {
+      setSortDir("desc");
+    } else {
+      setSortKey(null);
+    }
+  };
+
+  const sortedGrants = useMemo(() => {
+    if (!sortKey) return grants;
+    const { field, numeric } = SORT_FIELDS[sortKey];
+    const factor = sortDir === "asc" ? 1 : -1;
+
+    return [...grants].sort((a, b) => {
+      const av = a?.[field];
+      const bv = b?.[field];
+
+      // Push blanks to the bottom regardless of sort direction.
+      const aEmpty = av == null || av === "";
+      const bEmpty = bv == null || bv === "";
+      if (aEmpty && bEmpty) return 0;
+      if (aEmpty) return 1;
+      if (bEmpty) return -1;
+
+      const cmp = numeric
+        ? parseAmount(av) - parseAmount(bv)
+        : String(av).localeCompare(String(bv), "en", { sensitivity: "base" });
+      return cmp * factor;
+    });
+  }, [grants, sortKey, sortDir]);
 
   const totalFunding = useMemo(() => {
     let total = 0;
@@ -56,7 +117,14 @@ export default function ExplorerPage({ grants, totalGrants, q }: ExplorerPagePro
         </div>
         <div className="resultsToolbar">
           <div className="resultsButtons">
-            <button className="btn">Download</button>
+            <button
+              type="button"
+              className="btn"
+              disabled={grants.length === 0}
+              onClick={() => downloadCsv(grants, `sci-grants-${todaySlug()}.csv`)}
+            >
+              Download {grants.length > 0 ? `${grants.length.toLocaleString()} ` : ""}CSV
+            </button>
             <button
               type="button"
               className="toggleCardButton"
@@ -74,16 +142,36 @@ export default function ExplorerPage({ grants, totalGrants, q }: ExplorerPagePro
         {view === "sheet" ? (
           <div className="grantSheet">
             <div className="grantSheetHeader">
-              <div className="col title">Title</div>
-              <div className="col year">Year</div>
-              <div className="col agency">Agency</div>
-              <div className="col amount">Amount</div>
-              <div className="col state">State</div>
-              <div className="col mechanism">Mechanism</div>
+              {SORTABLE_COLUMNS.map(({ key, label }) => {
+                const active = sortKey === key;
+                return (
+                  <div
+                    key={key}
+                    className={`col ${key} sortable${active ? " sorted" : ""}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-sort={
+                      active ? (sortDir === "asc" ? "ascending" : "descending") : "none"
+                    }
+                    onClick={() => onSort(key)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSort(key);
+                      }
+                    }}
+                  >
+                    {label}
+                    <span className="sortIndicator" aria-hidden="true">
+                      {active ? (sortDir === "asc" ? "▲" : "▼") : "↕"}
+                    </span>
+                  </div>
+                );
+              })}
               <div className="col link">Link</div>
             </div>
 
-            {grants.map((g: any, idx: number) => {
+            {sortedGrants.map((g: any, idx: number) => {
               const key = rowKey(g, idx);
               const isExpanded = expandedKey === key;
               const toggle = () => setExpandedKey(isExpanded ? null : key);
@@ -151,7 +239,7 @@ export default function ExplorerPage({ grants, totalGrants, q }: ExplorerPagePro
           </div>
         ) : (
           <div className="grantCards">
-            {grants.map((g: any, idx: number) => (
+            {sortedGrants.map((g: any, idx: number) => (
               <div
                 className="grantCard"
                 key={g.id ?? `${g["Project Title"] ?? "grant"}-${idx}`}

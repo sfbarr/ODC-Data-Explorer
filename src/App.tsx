@@ -195,8 +195,8 @@ export default function App() {
             <span className="partnerLogoChip">
               <img
                 className="partnerLogo"
-                src="/logos/ucsf.png"
-                alt="UCSF logo"
+                src="/logos/TAM_new_logo.png"
+                alt="Texas A&M logo"
                 onError={(e) => {
                   const chip = e.currentTarget.closest(".partnerLogoChip");
                   if (chip instanceof HTMLElement) chip.style.display = "none";

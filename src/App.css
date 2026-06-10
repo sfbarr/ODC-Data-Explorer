@@ -489,6 +489,26 @@ button:hover {
   align-items: center;
 }
 
+/* Mobile-only filter drawer toggle (hidden on desktop) */
+.filtersToggle {
+  display: none;
+}
+
+.filtersToggleBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: rgba(84, 139, 244, 0.95);
+  color: #0b0e1a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 .canvas {
   flex: 1 1 auto;
   min-width: 0; /* prevents overflow when content is wide */
@@ -593,6 +613,17 @@ select.searchInput {
 /* -------- Responsive: situate sidebar above canvas on mobile -------- */
 /* -------- might change orientation later ---------------------------- */
 @media (max-width: 768px) {
+  /* Tighter header to reclaim vertical space above the fold */
+  .header {
+    padding: 0.4rem 0.75rem 0.6rem;
+  }
+  #logoBackground {
+    margin-top: 0.5em;
+  }
+  .brandTitle {
+    margin-bottom: 0.5em;
+  }
+
   .layout {
     flex-direction: column;
     gap: 0rem;
@@ -602,6 +633,16 @@ select.searchInput {
     max-width: 1400px;
     padding-left: 0.75rem;
     padding-right: 0.75rem;
+  }
+
+  /* Show the drawer toggle; full-width button above the canvas */
+  .filtersToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-bottom: 0.75rem;
   }
 
   .sidebar {
@@ -616,6 +657,15 @@ select.searchInput {
     overflow: visible; /* let dropdowns expand naturally */
     padding-right: 0;
     box-sizing: border-box;
+  }
+
+  /* Collapsed by default on mobile: hide the panel until the drawer opens */
+  .sidebar:not(.open) {
+    display: none;
+  }
+
+  .sidebar.open {
+    margin-bottom: 0.75rem;
   }
   .filterStubsContainer {
     gap: 0.35rem;

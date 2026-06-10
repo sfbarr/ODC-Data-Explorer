@@ -23,6 +23,7 @@ type GrantsSidebarProps = {
   options: OptionsMap;
   onReset: () => void;
   grants: any[]; // current filtered subset — used for download
+  open?: boolean; // mobile drawer state; ignored on desktop (always shown)
 };
 
 export default function GrantsSidebar({
@@ -34,11 +35,12 @@ export default function GrantsSidebar({
   options,
   onReset,
   grants,
+  open = false,
 }: GrantsSidebarProps) {
   const opt = (key: string) => options[key] ?? [];
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${open ? " open" : ""}`}>
       <section className="panel">
         <input
           className="searchInput sidebarSearch"

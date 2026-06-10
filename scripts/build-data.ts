@@ -9,6 +9,12 @@ function normalizeHeader(h: string) {
   return h.trim().replace(/\s+/g, " ");
 }
 
+// Empty trailing spreadsheet columns surface as "__EMPTY", "__EMPTY_1", etc.
+// They carry no data and otherwise leak into grants.json and CSV exports.
+function isJunkColumn(h: string) {
+  return /^__EMPTY/.test(h.trim());
+}
+
 function toStringSafe(v: unknown): string {
   if (v == null) return "";
   if (typeof v === "string") return v;
@@ -158,6 +164,7 @@ function main() {
   const rows: Row[] = rawRows.map((r) => {
     const out: Row = {};
     for (const [k, v] of Object.entries(r)) {
+      if (isJunkColumn(k)) continue;
       out[normalizeHeader(k)] = v;
     }
 

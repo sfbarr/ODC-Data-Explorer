@@ -1,24 +1,27 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ComposableMap,
   Geographies,
   Geography,
-  Marker,
-  ZoomableGroup,
-  createCoordinates,
-  getGeographyCentroid,
 } from "@vnedyalk0v/react19-simple-maps";
+import SingleSelectStub from "../components/SingleSelectStub";
 
 type Grant = {
-  State?: string; // e.g., "TX"
-  Amount?: number; // already cleaned to number
-  ["Project Number"]?: string;
-  ["Project Title"]?: string;
+  State?: string;
+  City?: string;
+  Organization?: string;
+  Agency?: string;
+  Amount?: number;
 };
 
 type CureMapPageProps = {
-  grants: Grant[]; // ideally already filtered upstream
+  grants: Grant[]; // already filtered upstream by the global sidebar
 };
+
+type Metric = "funding" | "count";
+type GroupBy = "state" | "city" | "institution" | "agency" | "region";
+
+type Stat = { funding: number; count: number };
 
 // TopoJSON state feature ids are FIPS codes. Map them -> USPS abbreviations.
 const FIPS_TO_ABBR: Record<string, string> = {
@@ -32,38 +35,106 @@ const FIPS_TO_ABBR: Record<string, string> = {
   "55": "WI", "56": "WY",
 };
 
-// Deterministic PRNG so jitter doesn’t reshuffle on every render
-function hashStringToUint32(s: string) {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
+const ABBR_TO_NAME: Record<string, string> = {
+  AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
+  CO: "Colorado", CT: "Connecticut", DE: "Delaware", DC: "District of Columbia",
+  FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois",
+  IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana",
+  ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota",
+  MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada",
+  NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico", NY: "New York",
+  NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon",
+  PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota",
+  TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia",
+  WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming",
+};
+
+// U.S. Census regions, used for the "Region" grouping and choropleth.
+const STATE_TO_REGION: Record<string, string> = {
+  CT: "Northeast", ME: "Northeast", MA: "Northeast", NH: "Northeast", RI: "Northeast",
+  VT: "Northeast", NJ: "Northeast", NY: "Northeast", PA: "Northeast",
+  IL: "Midwest", IN: "Midwest", MI: "Midwest", OH: "Midwest", WI: "Midwest",
+  IA: "Midwest", KS: "Midwest", MN: "Midwest", MO: "Midwest", NE: "Midwest",
+  ND: "Midwest", SD: "Midwest",
+  DE: "South", FL: "South", GA: "South", MD: "South", NC: "South", SC: "South",
+  VA: "South", DC: "South", WV: "South", AL: "South", KY: "South", MS: "South",
+  TN: "South", AR: "South", LA: "South", OK: "South", TX: "South",
+  AZ: "West", CO: "West", ID: "West", MT: "West", NV: "West", NM: "West",
+  UT: "West", WY: "West", AK: "West", CA: "West", HI: "West", OR: "West", WA: "West",
+};
+
+const METRIC_OPTIONS = [
+  { value: "funding", label: "Total Funding" },
+  { value: "count", label: "Grant Count" },
+];
+
+const GROUP_OPTIONS = [
+  { value: "state", label: "State" },
+  { value: "city", label: "City" },
+  { value: "institution", label: "Institution" },
+  { value: "agency", label: "Agency" },
+  { value: "region", label: "Region" },
+];
+
+function normalizeFunding(value: unknown): number {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value === "string") {
+    const n = Number(value.replace(/[$,\s]/g, ""));
+    return Number.isFinite(n) ? n : 0;
   }
-  return h >>> 0;
-}
-function mulberry32(seed: number) {
-  return function () {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-function clamp(n: number, lo: number, hi: number) {
-  return Math.max(lo, Math.min(hi, n));
+  return 0;
 }
 
-// Gaussian random using Box–Muller (blobby clusters instead of squares)
-function randn(rand: () => number) {
-  let u = 0, v = 0;
-  while (u === 0) u = rand();
-  while (v === 0) v = rand();
-  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+function cleanText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function formatCompactCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+function formatFullCurrency(value: number): string {
+  return value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
+}
+
+function metricValue(stat: Stat | undefined, metric: Metric): number {
+  if (!stat) return 0;
+  return metric === "funding" ? stat.funding : stat.count;
+}
+
+function formatMetric(value: number, metric: Metric): string {
+  return metric === "funding"
+    ? formatCompactCurrency(value)
+    : `${value.toLocaleString()} grants`;
+}
+
+// Sequential blue scale on the dark map. sqrt spreads a heavily skewed
+// distribution (a few states dominate total funding) across the ramp.
+function fillForRatio(ratio: number): string {
+  if (ratio <= 0) return "rgba(255,255,255,0.045)";
+  const t = Math.sqrt(Math.min(1, ratio));
+  const alpha = 0.16 + t * 0.82;
+  return `rgba(96,165,250,${alpha.toFixed(3)})`;
 }
 
 export default function CureMapPage({ grants }: CureMapPageProps) {
   const [geoData, setGeoData] = useState<any | null>(null);
   const [geoErr, setGeoErr] = useState<string | null>(null);
+  const [metric, setMetric] = useState<Metric>("funding");
+  const [groupBy, setGroupBy] = useState<GroupBy>("state");
+  const [hover, setHover] = useState<
+    { x: number; y: number; name: string; stat: Stat } | null
+  >(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/data/states-10m.json")
@@ -75,164 +146,291 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
       .catch((e) => setGeoErr(e instanceof Error ? e.message : String(e)));
   }, []);
 
-  const grantsWithState = useMemo(
-    () =>
-      grants
-        .map((g) => ({
-          ...g,
-          State: typeof g.State === "string" ? g.State.trim() : g.State,
-        }))
-        .filter((g) => typeof g.State === "string" && g.State.length === 2),
-    [grants]
-  );
+  // Per-state and per-region rollups drive the choropleth.
+  const { stateStats, regionStats } = useMemo(() => {
+    const stateStats = new Map<string, Stat>();
+    const regionStats = new Map<string, Stat>();
+
+    for (const g of grants) {
+      const abbr = cleanText(g.State).toUpperCase();
+      if (abbr.length !== 2) continue;
+      const amt = normalizeFunding(g.Amount);
+
+      const s = stateStats.get(abbr) ?? { funding: 0, count: 0 };
+      s.funding += amt;
+      s.count += 1;
+      stateStats.set(abbr, s);
+
+      const region = STATE_TO_REGION[abbr];
+      if (region) {
+        const r = regionStats.get(region) ?? { funding: 0, count: 0 };
+        r.funding += amt;
+        r.count += 1;
+        regionStats.set(region, r);
+      }
+    }
+
+    return { stateStats, regionStats };
+  }, [grants]);
+
+  // Ranked list for the side panel, grouped by the selected dimension.
+  const ranked = useMemo(() => {
+    const acc = new Map<string, Stat>();
+
+    const add = (key: string, amt: number) => {
+      if (!key) return;
+      const s = acc.get(key) ?? { funding: 0, count: 0 };
+      s.funding += amt;
+      s.count += 1;
+      acc.set(key, s);
+    };
+
+    for (const g of grants) {
+      const amt = normalizeFunding(g.Amount);
+      const abbr = cleanText(g.State).toUpperCase();
+
+      switch (groupBy) {
+        case "state":
+          if (abbr.length === 2) add(ABBR_TO_NAME[abbr] ?? abbr, amt);
+          break;
+        case "city": {
+          const city = cleanText(g.City);
+          if (city) add(abbr.length === 2 ? `${city}, ${abbr}` : city, amt);
+          break;
+        }
+        case "institution":
+          add(cleanText(g.Organization), amt);
+          break;
+        case "agency":
+          add(cleanText(g.Agency), amt);
+          break;
+        case "region":
+          if (STATE_TO_REGION[abbr]) add(STATE_TO_REGION[abbr], amt);
+          break;
+      }
+    }
+
+    return Array.from(acc.entries())
+      .map(([name, stat]) => ({ name, stat }))
+      .sort((a, b) => metricValue(b.stat, metric) - metricValue(a.stat, metric))
+      .slice(0, 15);
+  }, [grants, groupBy, metric]);
+
+  // Map fill encodes per-state metric, or per-region metric in region mode.
+  const maxMapValue = useMemo(() => {
+    const source = groupBy === "region" ? regionStats : stateStats;
+    let max = 0;
+    for (const stat of source.values()) {
+      const v = metricValue(stat, metric);
+      if (v > max) max = v;
+    }
+    return max;
+  }, [stateStats, regionStats, groupBy, metric]);
+
+  const totals = useMemo(() => {
+    let funding = 0;
+    let count = 0;
+    for (const stat of stateStats.values()) {
+      funding += stat.funding;
+      count += stat.count;
+    }
+    return { funding, count };
+  }, [stateStats]);
+
+  const rankedMax = ranked.length ? metricValue(ranked[0].stat, metric) : 0;
+  const panelTitle = GROUP_OPTIONS.find((o) => o.value === groupBy)?.label ?? "";
 
   if (geoErr) return <div className="canvas">Geo load error: {geoErr}</div>;
-  if (!geoData) return <div className="canvas">Loading map…</div>;
 
   return (
-    <div className="canvas" style={{ width: "100%", height: "100%" }}>
-      <ComposableMap
-        projection="geoAlbersUsa"
-        projectionConfig={{ scale: 1100 }}
-        width={980}
-        height={610}
-        style={{ width: "100%", height: "auto" }}
-      >
-        <ZoomableGroup zoom={1} center={createCoordinates(-96, 38)}>
-          <Geographies geography={geoData}>
-            {({ geographies }) => {
-              // Build abbr -> centroid lookup
-              const abbrToCentroid = new Map<string, [number, number]>();
+    <main className="canvas">
+      <div className="canvasHeader">
+        <div className="canvasTitle">Cure Map</div>
+        <div className="resultsSummary">
+          <span>
+            <strong>{totals.count.toLocaleString()}</strong> grants mapped across{" "}
+            <strong>{stateStats.size}</strong> states
+          </span>
+          <div className="fundingTotal">
+            {metric === "funding"
+              ? `${formatCompactCurrency(totals.funding)} total`
+              : `${totals.count.toLocaleString()} grants`}
+          </div>
+        </div>
+      </div>
 
-              for (const geo of geographies) {
-                const rawId = String((geo as any).id ?? "");
-                const fips = rawId.padStart(2, "0");
-                const abbr = FIPS_TO_ABBR[fips];
-                if (!abbr) continue;
+      <div className="cureMapControls">
+        <div className="gapFinderControl">
+          <SingleSelectStub
+            label="Metric"
+            value={metric}
+            options={METRIC_OPTIONS}
+            onChange={(v) => setMetric(v as Metric)}
+          />
+        </div>
+        <div className="gapFinderControl">
+          <SingleSelectStub
+            label="Group by"
+            value={groupBy}
+            options={GROUP_OPTIONS}
+            onChange={(v) => setGroupBy(v as GroupBy)}
+          />
+        </div>
+      </div>
 
-                const c = getGeographyCentroid(geo);
-                if (!c) continue;
+      <div className="cureMapBody">
+        <div className="cureMapChart" ref={wrapRef}>
+          {!geoData ? (
+            <div className="cureMapLoading">Loading map…</div>
+          ) : (
+            <div className="cureMapFrame">
+            <ComposableMap
+              projection="geoAlbersUsa"
+              projectionConfig={{ scale: 1000 }}
+              width={980}
+              height={580}
+              style={{ width: "100%", height: "100%", display: "block" }}
+            >
+              <Geographies geography={geoData}>
+                {({ geographies }: { geographies: any[] }) =>
+                  geographies.map((geo) => {
+                    const fips = String(geo.id ?? "").padStart(2, "0");
+                    const abbr = FIPS_TO_ABBR[fips];
+                    const region = abbr ? STATE_TO_REGION[abbr] : undefined;
 
-                abbrToCentroid.set(abbr, [Number(c[0]), Number(c[1])]);
-              }
+                    const stat =
+                      groupBy === "region"
+                        ? region
+                          ? regionStats.get(region)
+                          : undefined
+                        : abbr
+                          ? stateStats.get(abbr)
+                          : undefined;
 
-              // Turn grants into dots (Gaussian jitter + radial clamp + unique seed)
-              const dots = grantsWithState
-                .map((g, i) => {
-                  const abbr = g.State!;
-                  const center = abbrToCentroid.get(abbr);
-                  if (!center) return null;
+                    const value = metricValue(stat, metric);
+                    const ratio = maxMapValue ? value / maxMapValue : 0;
 
-                  // guarantee uniqueness even if Project Number is missing/repeated
-                  const seedKey =
-                    g["Project Number"] ||
-                    `${abbr}-${g["Project Title"] ?? "untitled"}-${i}`;
+                    return (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        onMouseEnter={(e: React.MouseEvent) => {
+                          if (!abbr) return;
+                          const rect = wrapRef.current?.getBoundingClientRect();
+                          setHover({
+                            x: e.clientX - (rect?.left ?? 0),
+                            y: e.clientY - (rect?.top ?? 0),
+                            name:
+                              groupBy === "region" && region
+                                ? region
+                                : ABBR_TO_NAME[abbr] ?? abbr,
+                            stat: stateStats.get(abbr) ?? { funding: 0, count: 0 },
+                          });
+                        }}
+                        onMouseMove={(e: React.MouseEvent) => {
+                          if (!abbr) return;
+                          const rect = wrapRef.current?.getBoundingClientRect();
+                          setHover((h) =>
+                            h
+                              ? {
+                                  ...h,
+                                  x: e.clientX - (rect?.left ?? 0),
+                                  y: e.clientY - (rect?.top ?? 0),
+                                }
+                              : h
+                          );
+                        }}
+                        onMouseLeave={() => setHover(null)}
+                        style={{
+                          default: {
+                            fill: fillForRatio(ratio),
+                            stroke: "rgba(255,255,255,0.22)",
+                            strokeWidth: 0.5,
+                            outline: "none",
+                          },
+                          hover: {
+                            fill: fillForRatio(ratio),
+                            stroke: "rgba(132,159,244,0.95)",
+                            strokeWidth: 1.1,
+                            outline: "none",
+                            cursor: "pointer",
+                          },
+                          pressed: {
+                            fill: fillForRatio(ratio),
+                            stroke: "rgba(132,159,244,0.95)",
+                            strokeWidth: 1.1,
+                            outline: "none",
+                          },
+                        }}
+                      />
+                    );
+                  })
+                }
+              </Geographies>
+            </ComposableMap>
+            </div>
+          )}
 
-                  const rand = mulberry32(hashStringToUint32(seedKey));
+          {hover ? (
+            <div
+              className="cureMapTooltip"
+              style={{ left: hover.x, top: hover.y }}
+            >
+              <div className="cureMapTooltipName">{hover.name}</div>
+              <div className="cureMapTooltipRow">
+                {formatFullCurrency(hover.stat.funding)}
+              </div>
+              <div className="cureMapTooltipRow muted">
+                {hover.stat.count.toLocaleString()} grants
+              </div>
+            </div>
+          ) : null}
 
-                  const STATE_NUDGE: Record<string, { dLon?: number; dLat?: number; maxR?: number }> = {
-                    FL: { dLon: 0.85, dLat: -0.95, maxR: 0.85 }, // south + east, tighter spread
-                    MI: { dLon: 0.5, dLat: -1.25 }, // nudge south + east to get dots off the mitten’s thumb
-                    CA: { dLon: -0.2, dLat: -0.25, maxR: 0 }, // spread north south more
-                  }; 
-                  
-                  const nudge = STATE_NUDGE[abbr] ?? {};
-                  const centerLon = center[0] + (nudge.dLon ?? 0);
-                  const centerLat = center[1] + (nudge.dLat ?? 0);
+          <div className="cureMapLegend">
+            <span className="cureMapLegendLabel">
+              {metric === "funding" ? "Less funding" : "Fewer grants"}
+            </span>
+            <span className="cureMapLegendBar" />
+            <span className="cureMapLegendLabel">
+              {metric === "funding" ? "More funding" : "More grants"}
+            </span>
+          </div>
+        </div>
 
-                  // Tune these to taste (smaller = tighter)
-                  const sigmaLat = 0.35;     // degrees
-                  const sigmaLonBase = 0.45; // degrees
-
-                  // keep lon distances more consistent across latitude
-                  const lonScale =
-                    1 / Math.max(0.35, Math.cos((centerLat * Math.PI) / 180));
-                  const sigmaLon = sigmaLonBase * lonScale;
-
-                  // radial clamp so we don't get a rectangular "block" (constant or state-based if available)
-                  const maxR = nudge.maxR ?? 1.1;
-
-                  let dLon = 0;
-                  let dLat = 0;
-                  for (let tries = 0; tries < 6; tries++) {
-                    dLon = randn(rand) * sigmaLon;
-                    dLat = randn(rand) * sigmaLat;
-                    if (dLon * dLon + dLat * dLat <= maxR * maxR) break;
-                  }
-
-                  const lon = centerLon + dLon;
-                  const lat = centerLat + dLat;
-
-                  const amt = typeof g.Amount === "number" ? g.Amount : 0;
-
-                  // sqrt keeps big grants from getting to big
-                  const r = clamp(Math.sqrt(amt) / 1200, 1.2, 4.5);
-
-                  return {
-                    key: seedKey,
-                    coords: createCoordinates(lon, lat),
-                    r,
-                    title: g["Project Title"] ?? "",
-                    amount: amt,
-                    state: abbr,
-                  };
-                })
-                .filter(Boolean) as Array<{
-                key: string;
-                coords: ReturnType<typeof createCoordinates>;
-                r: number;
-                title: string;
-                amount: number;
-                state: string;
-              }>;
-
-              return (
-                <>
-                  {/* Base map */}
-                  {geographies.map((geo) => (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      style={{
-                        default: {
-                          fill: "#f8fafc",
-                          stroke: "#0f172a",
-                          strokeWidth: 1,
-                          outline: "none",
-                        },
-                        hover: {
-                          fill: "#e2e8f0",
-                          stroke: "#0f172a",
-                          strokeWidth: 1,
-                          outline: "none",
-                        },
-                        pressed: {
-                          fill: "#e2e8f0",
-                          stroke: "#0f172a",
-                          strokeWidth: 1,
-                          outline: "none",
-                        },
-                      }}
-                    />
-                  ))}
-
-                  {/* Dots */}
-                  {dots.map((d) => (
-                    <Marker key={d.key} coordinates={d.coords}>
-                      <title>
-                        {d.title
-                          ? `${d.title} (${d.state}) — $${d.amount.toLocaleString()}`
-                          : `${d.state} — $${d.amount.toLocaleString()}`}
-                      </title>
-                      <circle r={d.r} fill="#60a5fa" fillOpacity={0.35} stroke="none" />
-                    </Marker>
-                  ))}
-                </>
-              );
-            }}
-          </Geographies>
-        </ZoomableGroup>
-      </ComposableMap>
-    </div>
+        <aside className="cureMapPanel">
+          <div className="cureMapPanelHeader">
+            Top {panelTitle} by {metric === "funding" ? "funding" : "grant count"}
+          </div>
+          {ranked.length === 0 ? (
+            <div className="cureMapPanelEmpty">No grants in the current view.</div>
+          ) : (
+            <ol className="cureMapRankList">
+              {ranked.map((item, i) => {
+                const value = metricValue(item.stat, metric);
+                const pct = rankedMax ? (value / rankedMax) * 100 : 0;
+                return (
+                  <li key={item.name} className="cureMapRankItem">
+                    <div className="cureMapRankTop">
+                      <span className="cureMapRankName" title={item.name}>
+                        <span className="cureMapRankNum">{i + 1}.</span> {item.name}
+                      </span>
+                      <span className="cureMapRankValue">
+                        {formatMetric(value, metric)}
+                      </span>
+                    </div>
+                    <div className="cureMapRankBarTrack">
+                      <div
+                        className="cureMapRankBarFill"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </aside>
+      </div>
+    </main>
   );
 }

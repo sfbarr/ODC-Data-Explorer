@@ -489,6 +489,26 @@ button:hover {
   align-items: center;
 }
 
+/* Mobile-only filter drawer toggle (hidden on desktop) */
+.filtersToggle {
+  display: none;
+}
+
+.filtersToggleBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: rgba(84, 139, 244, 0.95);
+  color: #0b0e1a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 .canvas {
   flex: 1 1 auto;
   min-width: 0; /* prevents overflow when content is wide */
@@ -593,6 +613,17 @@ select.searchInput {
 /* -------- Responsive: situate sidebar above canvas on mobile -------- */
 /* -------- might change orientation later ---------------------------- */
 @media (max-width: 768px) {
+  /* Tighter header to reclaim vertical space above the fold */
+  .header {
+    padding: 0.4rem 0.75rem 0.6rem;
+  }
+  #logoBackground {
+    margin-top: 0.5em;
+  }
+  .brandTitle {
+    margin-bottom: 0.5em;
+  }
+
   .layout {
     flex-direction: column;
     gap: 0rem;
@@ -602,6 +633,16 @@ select.searchInput {
     max-width: 1400px;
     padding-left: 0.75rem;
     padding-right: 0.75rem;
+  }
+
+  /* Show the drawer toggle; full-width button above the canvas */
+  .filtersToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-bottom: 0.75rem;
   }
 
   .sidebar {
@@ -616,6 +657,15 @@ select.searchInput {
     overflow: visible; /* let dropdowns expand naturally */
     padding-right: 0;
     box-sizing: border-box;
+  }
+
+  /* Collapsed by default on mobile: hide the panel until the drawer opens */
+  .sidebar:not(.open) {
+    display: none;
+  }
+
+  .sidebar.open {
+    margin-bottom: 0.75rem;
   }
   .filterStubsContainer {
     gap: 0.35rem;
@@ -714,6 +764,40 @@ select.searchInput {
   opacity: 0.9;
   line-height: 1.45;
   font-size: 0.92rem;
+}
+
+/* Sortable column headers */
+.grantSheetHeader .col.sortable {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.grantSheetHeader .col.sortable:hover {
+  color: rgba(132, 159, 244, 0.95);
+}
+
+.grantSheetHeader .col.sortable.sorted {
+  color: rgba(132, 159, 244, 0.95);
+}
+
+/* Right-aligned numeric headers keep their indicator next to the label */
+.grantSheetHeader .col.year.sortable,
+.grantSheetHeader .col.amount.sortable {
+  justify-content: flex-end;
+}
+
+.sortIndicator {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.grantSheetHeader .col.sortable.sorted .sortIndicator {
+  opacity: 0.95;
 }
 
 /* Title + agency + mechanism ellipsis */
@@ -1216,5 +1300,202 @@ select.searchInput {
 
   .trendFinderChartArea {
     height: 260px;
+  }
+}
+
+/* =============================
+   Cure Map styles
+   ============================= */
+.cureMapControls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin: 1.1rem 1rem 1rem;
+  position: relative;
+  z-index: 5;
+}
+
+.cureMapBody {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  margin: 0 1rem 1.25rem;
+}
+
+.cureMapChart {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.75rem;
+}
+
+/* Aspect-locked frame: the SVG fills it exactly, so the rendered box always
+   matches the 980x580 viewBox and never letterboxes (no right-side gap). */
+.cureMapFrame {
+  width: 100%;
+  aspect-ratio: 980 / 580;
+}
+
+.cureMapFrame .rsm-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cureMapLoading {
+  display: grid;
+  place-items: center;
+  min-height: 360px;
+  opacity: 0.7;
+}
+
+/* Mouse-following tooltip (anchored within .cureMapChart) */
+.cureMapTooltip {
+  position: absolute;
+  transform: translate(14px, -50%);
+  pointer-events: none;
+  z-index: 10;
+  background: rgba(14, 16, 30, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 0.55rem 0.75rem;
+  min-width: 140px;
+  backdrop-filter: blur(10px);
+}
+
+.cureMapTooltipName {
+  font-family: "league-spartan", sans-serif;
+  font-size: 0.95rem;
+  margin-bottom: 0.35rem;
+}
+
+.cureMapTooltipRow {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+}
+
+.cureMapTooltipRow.muted {
+  opacity: 0.7;
+  font-size: 0.82rem;
+}
+
+/* Legend */
+.cureMapLegend {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.cureMapLegendBar {
+  flex: 1 1 auto;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    rgba(96, 165, 250, 0.16),
+    rgba(96, 165, 250, 0.98)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cureMapLegendLabel {
+  white-space: nowrap;
+}
+
+/* Ranked side panel */
+.cureMapPanel {
+  flex: 0 0 clamp(260px, 28%, 360px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.85rem 0.95rem;
+}
+
+.cureMapPanelHeader {
+  font-family: "league-spartan", sans-serif;
+  font-size: 0.95rem;
+  opacity: 0.9;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cureMapPanelEmpty {
+  opacity: 0.6;
+  font-size: 0.9rem;
+}
+
+.cureMapRankList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cureMapRankTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.cureMapRankName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+}
+
+.cureMapRankNum {
+  opacity: 0.5;
+  margin-right: 0.15rem;
+}
+
+.cureMapRankValue {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  opacity: 0.92;
+}
+
+.cureMapRankBarTrack {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.cureMapRankBarFill {
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.75);
+}
+
+@media (max-width: 900px) {
+  .cureMapBody {
+    flex-direction: column;
+  }
+
+  .cureMapPanel {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .cureMapControls,
+  .cureMapBody {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
   }
 }

@@ -67,7 +67,7 @@ export default function App() {
       "gap-finder": "Gap Finder",
       "trend-finder": "Trend Finder",
     };
-    document.title = `SCI Data Explorer | ${titles[tab]}`;
+    document.title = `SCI Research Grants Explorer | ${titles[tab]}`;
   }, [tab]);
 
   const normalize = (v: unknown) =>
@@ -177,11 +177,35 @@ export default function App() {
     <div className="app">
       <header className="header">
         <div className="brand">
-          <div className="imgBackground" id="logoBackground">
-            <img id="odc-logo" className="logo" src={odcLogo} alt="ODC logo" />
+          <div className="brandLogos">
+            <span className="partnerLogoChip">
+              <img
+                className="partnerLogo"
+                src="/logos/u2fp.png"
+                alt="Unite 2 Fight Paralysis logo"
+                onError={(e) => {
+                  const chip = e.currentTarget.closest(".partnerLogoChip");
+                  if (chip instanceof HTMLElement) chip.style.display = "none";
+                }}
+              />
+            </span>
+            <div className="imgBackground" id="logoBackground">
+              <img id="odc-logo" className="logo" src={odcLogo} alt="ODC logo" />
+            </div>
+            <span className="partnerLogoChip">
+              <img
+                className="partnerLogo"
+                src="/logos/ucsf.png"
+                alt="UCSF logo"
+                onError={(e) => {
+                  const chip = e.currentTarget.closest(".partnerLogoChip");
+                  if (chip instanceof HTMLElement) chip.style.display = "none";
+                }}
+              />
+            </span>
           </div>
           <div>
-            <div className="brandTitle">SCI Data Explorer</div>
+            <div className="brandTitle">SCI Research Grants Explorer</div>
           </div>
         </div>
         <nav className="tabs">

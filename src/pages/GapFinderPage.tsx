@@ -91,6 +91,56 @@ function formatCompactCurrency(value: number): string {
   }).format(value);
 }
 
+function slugify(value: string): string {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "all"
+  );
+}
+
+// Tiny inline download glyph used on cells and row/column headers.
+function DownloadButton({
+  title,
+  onClick,
+}: {
+  title: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="gapFinderDownloadBtn"
+      title={title}
+      aria-label={title}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+    >
+      <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">
+        <path
+          d="M8 2v8M5 7l3 3 3-3"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M3.5 13.5h9"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    </button>
+  );
+}
+
 function clamp01(value: number): number {
   if (value <= 0) return 0;
   if (value >= 1) return 1;
@@ -241,6 +291,26 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
     [filteredGrants, xKey, yKey]
   );
 
+  // Per-cell / per-row / per-column exports of the underlying grant records.
+  const downloadCell = (xLabel: string, yLabel: string) => {
+    const rows = filteredGrants.filter(
+      (g) =>
+        normalizeCategory(g[xKey]) === xLabel &&
+        normalizeCategory(g[yKey]) === yLabel
+    );
+    downloadCsv(rows, `sci-grants-${slugify(yLabel)}-x-${slugify(xLabel)}-${todaySlug()}.csv`);
+  };
+
+  const downloadColumn = (xLabel: string) => {
+    const rows = filteredGrants.filter((g) => normalizeCategory(g[xKey]) === xLabel);
+    downloadCsv(rows, `sci-grants-${slugify(xLabel)}-${todaySlug()}.csv`);
+  };
+
+  const downloadRow = (yLabel: string) => {
+    const rows = filteredGrants.filter((g) => normalizeCategory(g[yKey]) === yLabel);
+    downloadCsv(rows, `sci-grants-${slugify(yLabel)}-${todaySlug()}.csv`);
+  };
+
   const activeMax = metric === "funding" ? matrixData.maxFunding : matrixData.maxCount;
   const totalFilteredCount = filteredGrants.length;
   const totalFilteredFunding = filteredGrants.reduce(
@@ -377,7 +447,15 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
               </th>
               {matrixData.xLabels.map((xLabel) => (
                 <th key={xLabel} className="gapFinderColumnHeader" title={xLabel}>
-                  <div className="gapFinderHeaderLabel">{xLabel}</div>
+                  <div className="gapFinderHeaderTop">
+                    <div className="gapFinderHeaderLabel">{xLabel}</div>
+                    {(matrixData.colTotals[xLabel]?.count ?? 0) > 0 ? (
+                      <DownloadButton
+                        title={`Download all grants in “${xLabel}”`}
+                        onClick={() => downloadColumn(xLabel)}
+                      />
+                    ) : null}
+                  </div>
                   <div className="gapFinderHeaderSubtext">
                     {metric === "funding"
                       ? formatCompactCurrency(matrixData.colTotals[xLabel]?.funding ?? 0)
@@ -393,7 +471,15 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
               return (
                 <tr key={yLabel}>
                   <th className="gapFinderRowHeader" title={yLabel}>
-                    <div className="gapFinderHeaderLabel">{yLabel}</div>
+                    <div className="gapFinderHeaderTop">
+                      <div className="gapFinderHeaderLabel">{yLabel}</div>
+                      {rowTotal.count > 0 ? (
+                        <DownloadButton
+                          title={`Download all grants in “${yLabel}”`}
+                          onClick={() => downloadRow(yLabel)}
+                        />
+                      ) : null}
+                    </div>
                     <div className="gapFinderHeaderSubtext">
                       {metric === "funding"
                         ? formatCompactCurrency(rowTotal.funding)
@@ -417,6 +503,12 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
                             ...style,
                           }}
                         >
+                          {cell.count > 0 ? (
+                            <DownloadButton
+                              title={`Download ${cell.count.toLocaleString()} grants: ${yLabel} × ${xLabel}`}
+                              onClick={() => downloadCell(xLabel, yLabel)}
+                            />
+                          ) : null}
                           <div className="gapFinderCellCount">
                             {cell.count.toLocaleString()} grants
                           </div>

@@ -1130,6 +1130,59 @@ select.searchInput {
   line-height: 1.2;
 }
 
+/* Per-cell / per-header download button */
+.gapFinderDownloadBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  flex-shrink: 0;
+  line-height: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+}
+
+.gapFinderDownloadBtn:hover {
+  border-color: rgba(132, 159, 244, 0.95);
+  background: rgba(15, 18, 36, 0.6);
+  color: #fff;
+}
+
+.gapFinderHeaderTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.gapFinderHeaderTop .gapFinderHeaderLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Cell button sits in the corner and reveals on hover to avoid clutter */
+.gapFinderCellCard {
+  position: relative;
+}
+
+.gapFinderCellCard .gapFinderDownloadBtn {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.gapFinderCell:hover .gapFinderCellCard .gapFinderDownloadBtn,
+.gapFinderCellCard .gapFinderDownloadBtn:focus-visible {
+  opacity: 1;
+}
+
 @media (max-width: 768px) {
   .gapFinderControls,
   .gapFinderMetaRow,

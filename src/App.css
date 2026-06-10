@@ -22,6 +22,37 @@
   align-items: center;
 }
 
+/* Row holding the U2FP + ODC (center) + UCSF logos */
+.brandLogos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.85rem, 3vw, 1.75rem);
+  margin-top: 1em;
+}
+
+/* White chip normalizes partner logos (which have light/opaque backgrounds)
+   so they read cleanly against the dark header */
+.partnerLogoChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: clamp(44px, 5.5vw, 58px);
+  padding: 0.35rem 0.6rem;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* Partner (institution) logos flanking the ODC badge */
+.partnerLogo {
+  height: 100%;
+  width: auto;
+  max-width: clamp(86px, 13vw, 140px);
+  object-fit: contain;
+  display: block;
+}
+
 /* Logo */
 
 #logoBackground {
@@ -30,10 +61,6 @@
 
   width: clamp(60px, 5vw, 70px);
   height: clamp(60px, 5vw, 70px);
-
-  /* margin */
-  /* margin-bottom: 1em; */
-  margin-top: 1em;
 
   border-radius: 999px;
 
@@ -120,6 +147,7 @@ html, body {
 .brandTitle {
   justify-self: center;
   font-family: "league-spartan", sans-serif;
+  margin-top: 0.6em;     /* balances margin-bottom so the title sits centered between logos and tabs */
   margin-bottom: 1em;
 }
 
@@ -149,6 +177,7 @@ button:hover {
 
   justify-self: center;
   margin: 0;
+  margin-top: 0.75rem;   /* push tabs (and content below in normal flow) lower, separating from title/logos */
   border-radius: 10px;
   overflow: hidden; /* keeps rounded corners clean */
 
@@ -167,6 +196,12 @@ button:hover {
   margin: 0;
   border-radius: 0;
   font-family: "league-spartan", sans-serif;
+
+  /* Vertically center the label within the full-height grid cell */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.6em;
 
   /* Prevent awkward wrapping like Cure\nMap unless super narrow */
   white-space: nowrap;
@@ -188,7 +223,7 @@ button:hover {
  /* ------- main page, below tabs ------- */
 .layout {
   width: min(1800px, 95vw);
-  margin: 1.25rem auto 1.25rem;
+  margin: 1.75rem auto 1.25rem;
 
   display: flex;
   gap: 1.25rem;
@@ -198,7 +233,7 @@ button:hover {
 /* Gap Finder renders without the sidebar layout — give it matching outer spacing */
 .gapFinderWrapper {
   width: min(1800px, 95vw);
-  margin: 1.25rem auto 1.25rem;
+  margin: 1.75rem auto 1.25rem;
 }
 
 /* Sidebar is just a container (no card styling, no scrolling) */
@@ -617,10 +652,12 @@ select.searchInput {
   .header {
     padding: 0.4rem 0.75rem 0.6rem;
   }
-  #logoBackground {
+  .brandLogos {
     margin-top: 0.5em;
+    gap: clamp(0.6rem, 4vw, 1rem);
   }
   .brandTitle {
+    margin-top: 0.4em;
     margin-bottom: 0.5em;
   }
 

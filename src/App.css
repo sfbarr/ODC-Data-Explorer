@@ -1517,6 +1517,42 @@ select.searchInput {
   white-space: nowrap;
 }
 
+/* Bubble-size legend (cities map) */
+.cureMapBubbleLegend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.cureMapBubbleDot {
+  display: inline-block;
+  border-radius: 50%;
+  background: rgba(96, 165, 250, 0.5);
+  border: 1px solid rgba(191, 219, 254, 0.95);
+}
+
+.cureMapBubbleDot.small {
+  width: 7px;
+  height: 7px;
+}
+
+.cureMapBubbleDot.mid {
+  width: 12px;
+  height: 12px;
+}
+
+.cureMapBubbleDot.large {
+  width: 18px;
+  height: 18px;
+}
+
+.cureMapOffMapNote {
+  margin-left: auto;
+  font-size: 0.78rem;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
 /* Ranked side panel */
 .cureMapPanel {
   flex: 0 0 clamp(260px, 28%, 360px);

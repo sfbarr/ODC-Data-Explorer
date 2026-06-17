@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "preview": "vite preview",
-    "build:data": "tsx scripts/build-data.ts src/assets/data/ODC_grants.xlsx"
+    "build:data": "tsx scripts/build-data.ts src/assets/data/ODC_grants.xlsx",
+    "build:cities": "tsx scripts/build-city-coords.ts"
   },
   "dependencies": {
     "@vnedyalk0v/react19-simple-maps": "^2.0.2",
@@ -27,6 +28,7 @@
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "all-the-cities": "^3.1.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

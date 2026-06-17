@@ -3,6 +3,8 @@ import {
   ComposableMap,
   Geographies,
   Geography,
+  Marker,
+  createCoordinates,
 } from "@vnedyalk0v/react19-simple-maps";
 import SingleSelectStub from "../components/SingleSelectStub";
 import GrantsModal from "../components/GrantsModal";
@@ -22,8 +24,17 @@ type CureMapPageProps = {
 
 type Metric = "funding" | "count";
 type GroupBy = "state" | "city" | "institution" | "agency" | "region";
+type MapStyle = "cities" | "states";
 
 type Stat = { funding: number; count: number };
+
+type CityStat = {
+  key: string; // "CITY|ST"
+  name: string; // "City, ST" (title-cased) for display
+  coord: [number, number]; // [lng, lat]
+  funding: number;
+  count: number;
+};
 
 // TopoJSON state feature ids are FIPS codes. Map them -> USPS abbreviations.
 const FIPS_TO_ABBR: Record<string, string> = {
@@ -65,10 +76,37 @@ const STATE_TO_REGION: Record<string, string> = {
   UT: "West", WY: "West", AK: "West", CA: "West", HI: "West", OR: "West", WA: "West",
 };
 
+const MAP_STYLE_OPTIONS = [
+  { value: "cities", label: "Cities (dots)" },
+  { value: "states", label: "States (shaded)" },
+];
+
 const METRIC_OPTIONS = [
   { value: "funding", label: "Total Funding" },
   { value: "count", label: "Grant Count" },
 ];
+
+// Normalized "CITY|ST" key matching scripts/build-city-coords.ts.
+function cityKey(city: string, state: string): string {
+  return (
+    city.trim().toUpperCase().replace(/\s+/g, " ") +
+    "|" +
+    state.trim().toUpperCase()
+  );
+}
+
+function titleCase(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\b[a-z]/g, (c) => c.toUpperCase());
+}
+
+// Area-proportional bubble radius (px in the 980×580 viewBox): r ∝ √value so
+// circle area encodes the metric, with a small floor so tiny cities stay visible.
+function bubbleRadius(value: number, maxValue: number): number {
+  if (!maxValue || value <= 0) return 2.5;
+  return 3 + Math.sqrt(value / maxValue) * 24;
+}
 
 const GROUP_OPTIONS = [
   { value: "state", label: "State" },
@@ -133,6 +171,11 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
   const [geoErr, setGeoErr] = useState<string | null>(null);
   const [metric, setMetric] = useState<Metric>("funding");
   const [groupBy, setGroupBy] = useState<GroupBy>("state");
+  const [mapStyle, setMapStyle] = useState<MapStyle>("cities");
+  const [cityCoords, setCityCoords] = useState<Record<
+    string,
+    [number, number]
+  > | null>(null);
   // Only the tooltip's text content lives in React state; its position is
   // updated imperatively (below) so moving the mouse never re-renders the map.
   const [hover, setHover] = useState<{ name: string; stat: Stat } | null>(null);
@@ -173,6 +216,25 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
     },
     [grants]
   );
+
+  // Click a city bubble to drill into just that city's grants.
+  const openCity = useCallback(
+    (key: string, name: string) => {
+      const rows = grants.filter(
+        (g) => cityKey(cleanText(g.City), cleanText(g.State)) === key
+      );
+      if (rows.length === 0) return;
+      setModal({ title: name, grants: rows });
+    },
+    [grants]
+  );
+
+  useEffect(() => {
+    fetch("/data/city-coords.json")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((j) => setCityCoords(j))
+      .catch(() => setCityCoords({})); // degrade gracefully: no bubbles
+  }, []);
 
   useEffect(() => {
     fetch("/data/states-10m.json")
@@ -275,8 +337,75 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
     return { funding, count };
   }, [stateStats]);
 
-  const rankedMax = ranked.length ? metricValue(ranked[0].stat, metric) : 0;
-  const panelTitle = GROUP_OPTIONS.find((o) => o.value === groupBy)?.label ?? "";
+  // Per-city rollups for the bubble map: aggregate grants whose (City, State)
+  // resolves to real coordinates; everything else (foreign cities, Puerto Rico,
+  // bad rows) is counted as "off-map" so we can disclose it honestly.
+  const { cityStats, offMapGrants, mappedGrants } = useMemo(() => {
+    if (!cityCoords) {
+      return { cityStats: [] as CityStat[], offMapGrants: 0, mappedGrants: 0 };
+    }
+    const acc = new Map<string, CityStat>();
+    let offMap = 0;
+    let mapped = 0;
+
+    for (const g of grants) {
+      const city = cleanText(g.City);
+      const state = cleanText(g.State);
+      if (!city || !state) continue;
+      const key = cityKey(city, state);
+      const coord = cityCoords[key];
+      const amt = normalizeFunding(g.Amount);
+      if (!coord) {
+        offMap += 1;
+        continue;
+      }
+      mapped += 1;
+      const prev =
+        acc.get(key) ??
+        ({
+          key,
+          name: `${titleCase(city)}, ${state.toUpperCase()}`,
+          coord,
+          funding: 0,
+          count: 0,
+        } as CityStat);
+      prev.funding += amt;
+      prev.count += 1;
+      acc.set(key, prev);
+    }
+
+    return {
+      cityStats: Array.from(acc.values()),
+      offMapGrants: offMap,
+      mappedGrants: mapped,
+    };
+  }, [grants, cityCoords]);
+
+  const maxCityValue = useMemo(() => {
+    let max = 0;
+    for (const c of cityStats) {
+      const v = metric === "funding" ? c.funding : c.count;
+      if (v > max) max = v;
+    }
+    return max;
+  }, [cityStats, metric]);
+
+  // Top cities for the side panel (cities mode).
+  const cityRanked = useMemo(() => {
+    return [...cityStats]
+      .map((c) => ({ name: c.name, stat: { funding: c.funding, count: c.count } }))
+      .sort((a, b) => metricValue(b.stat, metric) - metricValue(a.stat, metric))
+      .slice(0, 15);
+  }, [cityStats, metric]);
+
+  const isCities = mapStyle === "cities";
+  const panelItems = isCities ? cityRanked : ranked;
+  const rankedMax = panelItems.length
+    ? metricValue(panelItems[0].stat, metric)
+    : 0;
+  const panelTitle = isCities
+    ? "Cities"
+    : GROUP_OPTIONS.find((o) => o.value === groupBy)?.label ?? "";
 
   // The map subtree is memoized so it is NOT rebuilt when the hover tooltip
   // changes — only when the data/encoding actually changes. This is the core
@@ -372,6 +501,88 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
     openSubset,
   ]);
 
+  // City-bubble map: faint state outlines as a base layer, with one circle per
+  // city sized by the active metric. Memoized for the same reason as above so
+  // hovering never rebuilds the bubbles. Larger bubbles render first so smaller
+  // ones stay on top and clickable where they overlap.
+  const cityMapContent = useMemo(() => {
+    if (!geoData) return null;
+    const ordered = [...cityStats].sort(
+      (a, b) =>
+        (metric === "funding" ? b.funding : b.count) -
+        (metric === "funding" ? a.funding : a.count)
+    );
+    return (
+      <ComposableMap
+        projection="geoAlbersUsa"
+        projectionConfig={{ scale: 1000 }}
+        width={980}
+        height={580}
+        style={{ width: "100%", height: "100%", display: "block" }}
+      >
+        <Geographies geography={geoData}>
+          {({ geographies }: { geographies: any[] }) =>
+            geographies.map((geo) => (
+              <Geography
+                key={geo.rsmKey}
+                geography={geo}
+                style={{
+                  default: {
+                    fill: "rgba(255,255,255,0.04)",
+                    stroke: "rgba(255,255,255,0.16)",
+                    strokeWidth: 0.5,
+                    outline: "none",
+                  },
+                  hover: {
+                    fill: "rgba(255,255,255,0.04)",
+                    stroke: "rgba(255,255,255,0.16)",
+                    strokeWidth: 0.5,
+                    outline: "none",
+                  },
+                  pressed: {
+                    fill: "rgba(255,255,255,0.04)",
+                    stroke: "rgba(255,255,255,0.16)",
+                    strokeWidth: 0.5,
+                    outline: "none",
+                  },
+                }}
+              />
+            ))
+          }
+        </Geographies>
+
+        {ordered.map((c) => {
+          const value = metric === "funding" ? c.funding : c.count;
+          const r = bubbleRadius(value, maxCityValue);
+          return (
+            <Marker
+              key={c.key}
+              coordinates={createCoordinates(c.coord[0], c.coord[1])}
+              onMouseEnter={(e: React.MouseEvent) => {
+                moveTooltip(e.clientX, e.clientY);
+                setHover({
+                  name: c.name,
+                  stat: { funding: c.funding, count: c.count },
+                });
+              }}
+              onMouseMove={(e: React.MouseEvent) => moveTooltip(e.clientX, e.clientY)}
+              onMouseLeave={() => setHover(null)}
+              onClick={() => openCity(c.key, c.name)}
+            >
+              <circle
+                r={r}
+                fill="rgba(96,165,250,0.5)"
+                stroke="rgba(191,219,254,0.95)"
+                strokeWidth={0.6}
+                style={{ cursor: "pointer" }}
+              />
+            </Marker>
+          );
+        })}
+      </ComposableMap>
+    );
+  }, [geoData, cityStats, metric, maxCityValue, moveTooltip, openCity]);
+
   if (geoErr) return <div className="canvas">Geo load error: {geoErr}</div>;
 
   return (
@@ -380,8 +591,17 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
         <div className="canvasTitle">Cure Map</div>
         <div className="resultsSummary">
           <span>
-            <strong>{totals.count.toLocaleString()}</strong> grants mapped across{" "}
-            <strong>{stateStats.size}</strong> states
+            {isCities ? (
+              <>
+                <strong>{mappedGrants.toLocaleString()}</strong> grants mapped across{" "}
+                <strong>{cityStats.length.toLocaleString()}</strong> cities
+              </>
+            ) : (
+              <>
+                <strong>{totals.count.toLocaleString()}</strong> grants mapped across{" "}
+                <strong>{stateStats.size}</strong> states
+              </>
+            )}
           </span>
           <div className="fundingTotal">
             {metric === "funding"
@@ -394,28 +614,40 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
       <div className="cureMapControls">
         <div className="gapFinderControl">
           <SingleSelectStub
+            label="Map style"
+            value={mapStyle}
+            options={MAP_STYLE_OPTIONS}
+            onChange={(v) => setMapStyle(v as MapStyle)}
+          />
+        </div>
+        <div className="gapFinderControl">
+          <SingleSelectStub
             label="Metric"
             value={metric}
             options={METRIC_OPTIONS}
             onChange={(v) => setMetric(v as Metric)}
           />
         </div>
-        <div className="gapFinderControl">
-          <SingleSelectStub
-            label="Group by"
-            value={groupBy}
-            options={GROUP_OPTIONS}
-            onChange={(v) => setGroupBy(v as GroupBy)}
-          />
-        </div>
+        {!isCities ? (
+          <div className="gapFinderControl">
+            <SingleSelectStub
+              label="Group by"
+              value={groupBy}
+              options={GROUP_OPTIONS}
+              onChange={(v) => setGroupBy(v as GroupBy)}
+            />
+          </div>
+        ) : null}
       </div>
 
       <div className="cureMapBody">
         <div className="cureMapChart" ref={wrapRef}>
-          {!geoData ? (
+          {!geoData || (isCities && !cityCoords) ? (
             <div className="cureMapLoading">Loading map…</div>
           ) : (
-            <div className="cureMapFrame">{mapContent}</div>
+            <div className="cureMapFrame">
+              {isCities ? cityMapContent : mapContent}
+            </div>
           )}
 
           {hover ? (
@@ -435,13 +667,36 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
           ) : null}
 
           <div className="cureMapLegend">
-            <span className="cureMapLegendLabel">
-              {metric === "funding" ? "Less funding" : "Fewer grants"}
-            </span>
-            <span className="cureMapLegendBar" />
-            <span className="cureMapLegendLabel">
-              {metric === "funding" ? "More funding" : "More grants"}
-            </span>
+            {isCities ? (
+              <>
+                <span className="cureMapLegendLabel">
+                  {metric === "funding" ? "Less funding" : "Fewer grants"}
+                </span>
+                <span className="cureMapBubbleLegend" aria-hidden="true">
+                  <span className="cureMapBubbleDot small" />
+                  <span className="cureMapBubbleDot mid" />
+                  <span className="cureMapBubbleDot large" />
+                </span>
+                <span className="cureMapLegendLabel">
+                  {metric === "funding" ? "More funding" : "More grants"}
+                </span>
+                {offMapGrants > 0 ? (
+                  <span className="cureMapOffMapNote">
+                    {offMapGrants.toLocaleString()} grants outside the U.S. map
+                  </span>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <span className="cureMapLegendLabel">
+                  {metric === "funding" ? "Less funding" : "Fewer grants"}
+                </span>
+                <span className="cureMapLegendBar" />
+                <span className="cureMapLegendLabel">
+                  {metric === "funding" ? "More funding" : "More grants"}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -449,11 +704,11 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
           <div className="cureMapPanelHeader">
             Top {panelTitle} by {metric === "funding" ? "funding" : "grant count"}
           </div>
-          {ranked.length === 0 ? (
+          {panelItems.length === 0 ? (
             <div className="cureMapPanelEmpty">No grants in the current view.</div>
           ) : (
             <ol className="cureMapRankList">
-              {ranked.map((item, i) => {
+              {panelItems.map((item, i) => {
                 const value = metricValue(item.stat, metric);
                 const pct = rankedMax ? (value / rankedMax) * 100 : 0;
                 return (

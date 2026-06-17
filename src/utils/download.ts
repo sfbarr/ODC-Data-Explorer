@@ -38,3 +38,18 @@ export function downloadCsv(rows: Record<string, unknown>[], filename: string): 
 export function todaySlug(): string {
   return new Date().toISOString().slice(0, 10);
 }
+
+/**
+ * Turn an arbitrary label into a filename-safe slug:
+ * lowercase, non-alphanumerics collapsed to hyphens, trimmed, capped at 40 chars.
+ * Falls back to "all" when nothing usable remains.
+ */
+export function slugify(value: string): string {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "all"
+  );
+}

@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import RangeSlider from "../components/RangeSlider";
 import SingleSelectStub from "../components/SingleSelectStub";
-import { downloadCsv, todaySlug } from "../utils/download";
+import GrantsModal from "../components/GrantsModal";
+import { downloadCsv, slugify, todaySlug } from "../utils/download";
 
 type GrantRecord = Record<string, unknown>;
 
@@ -91,16 +92,6 @@ function formatCompactCurrency(value: number): string {
   }).format(value);
 }
 
-function slugify(value: string): string {
-  return (
-    value
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 40) || "all"
-  );
-}
-
 // Tiny inline download glyph used on cells and row/column headers.
 function DownloadButton({
   title,
@@ -136,6 +127,39 @@ function DownloadButton({
           strokeWidth="1.5"
           strokeLinecap="round"
         />
+      </svg>
+    </button>
+  );
+}
+
+// Tiny inline "view" (eye) glyph that opens an Explorer popup for the subset.
+function ViewButton({
+  title,
+  onClick,
+}: {
+  title: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="gapFinderDownloadBtn"
+      title={title}
+      aria-label={title}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+    >
+      <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">
+        <path
+          d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.3"
+          strokeLinejoin="round"
+        />
+        <circle cx="8" cy="8" r="1.9" fill="currentColor" />
       </svg>
     </button>
   );
@@ -291,25 +315,51 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
     [filteredGrants, xKey, yKey]
   );
 
-  // Per-cell / per-row / per-column exports of the underlying grant records.
-  const downloadCell = (xLabel: string, yLabel: string) => {
-    const rows = filteredGrants.filter(
+  const [modal, setModal] = useState<{
+    title: string;
+    grants: GrantRecord[];
+  } | null>(null);
+
+  // Subset selectors shared by the download and view actions, so a cell's
+  // CSV and its Explorer popup always show the exact same grants.
+  const subsetForCell = (xLabel: string, yLabel: string) =>
+    filteredGrants.filter(
       (g) =>
         normalizeCategory(g[xKey]) === xLabel &&
         normalizeCategory(g[yKey]) === yLabel
     );
-    downloadCsv(rows, `sci-grants-${slugify(yLabel)}-x-${slugify(xLabel)}-${todaySlug()}.csv`);
+
+  const subsetForColumn = (xLabel: string) =>
+    filteredGrants.filter((g) => normalizeCategory(g[xKey]) === xLabel);
+
+  const subsetForRow = (yLabel: string) =>
+    filteredGrants.filter((g) => normalizeCategory(g[yKey]) === yLabel);
+
+  // Per-cell / per-row / per-column exports of the underlying grant records.
+  const downloadCell = (xLabel: string, yLabel: string) => {
+    downloadCsv(
+      subsetForCell(xLabel, yLabel),
+      `sci-grants-${slugify(yLabel)}-x-${slugify(xLabel)}-${todaySlug()}.csv`
+    );
   };
 
   const downloadColumn = (xLabel: string) => {
-    const rows = filteredGrants.filter((g) => normalizeCategory(g[xKey]) === xLabel);
-    downloadCsv(rows, `sci-grants-${slugify(xLabel)}-${todaySlug()}.csv`);
+    downloadCsv(subsetForColumn(xLabel), `sci-grants-${slugify(xLabel)}-${todaySlug()}.csv`);
   };
 
   const downloadRow = (yLabel: string) => {
-    const rows = filteredGrants.filter((g) => normalizeCategory(g[yKey]) === yLabel);
-    downloadCsv(rows, `sci-grants-${slugify(yLabel)}-${todaySlug()}.csv`);
+    downloadCsv(subsetForRow(yLabel), `sci-grants-${slugify(yLabel)}-${todaySlug()}.csv`);
   };
+
+  // Open the Explorer popup for the same subsets.
+  const viewCell = (xLabel: string, yLabel: string) =>
+    setModal({ title: `${yLabel} × ${xLabel}`, grants: subsetForCell(xLabel, yLabel) });
+
+  const viewColumn = (xLabel: string) =>
+    setModal({ title: xLabel, grants: subsetForColumn(xLabel) });
+
+  const viewRow = (yLabel: string) =>
+    setModal({ title: yLabel, grants: subsetForRow(yLabel) });
 
   const activeMax = metric === "funding" ? matrixData.maxFunding : matrixData.maxCount;
   const totalFilteredCount = filteredGrants.length;
@@ -450,10 +500,16 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
                   <div className="gapFinderHeaderTop">
                     <div className="gapFinderHeaderLabel">{xLabel}</div>
                     {(matrixData.colTotals[xLabel]?.count ?? 0) > 0 ? (
-                      <DownloadButton
-                        title={`Download all grants in “${xLabel}”`}
-                        onClick={() => downloadColumn(xLabel)}
-                      />
+                      <div className="gapFinderHeaderActions">
+                        <ViewButton
+                          title={`View all grants in “${xLabel}”`}
+                          onClick={() => viewColumn(xLabel)}
+                        />
+                        <DownloadButton
+                          title={`Download all grants in “${xLabel}”`}
+                          onClick={() => downloadColumn(xLabel)}
+                        />
+                      </div>
                     ) : null}
                   </div>
                   <div className="gapFinderHeaderSubtext">
@@ -474,10 +530,16 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
                     <div className="gapFinderHeaderTop">
                       <div className="gapFinderHeaderLabel">{yLabel}</div>
                       {rowTotal.count > 0 ? (
-                        <DownloadButton
-                          title={`Download all grants in “${yLabel}”`}
-                          onClick={() => downloadRow(yLabel)}
-                        />
+                        <div className="gapFinderHeaderActions">
+                          <ViewButton
+                            title={`View all grants in “${yLabel}”`}
+                            onClick={() => viewRow(yLabel)}
+                          />
+                          <DownloadButton
+                            title={`Download all grants in “${yLabel}”`}
+                            onClick={() => downloadRow(yLabel)}
+                          />
+                        </div>
                       ) : null}
                     </div>
                     <div className="gapFinderHeaderSubtext">
@@ -504,10 +566,16 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
                           }}
                         >
                           {cell.count > 0 ? (
-                            <DownloadButton
-                              title={`Download ${cell.count.toLocaleString()} grants: ${yLabel} × ${xLabel}`}
-                              onClick={() => downloadCell(xLabel, yLabel)}
-                            />
+                            <div className="gapFinderCellActions">
+                              <ViewButton
+                                title={`View ${cell.count.toLocaleString()} grants: ${yLabel} × ${xLabel}`}
+                                onClick={() => viewCell(xLabel, yLabel)}
+                              />
+                              <DownloadButton
+                                title={`Download ${cell.count.toLocaleString()} grants: ${yLabel} × ${xLabel}`}
+                                onClick={() => downloadCell(xLabel, yLabel)}
+                              />
+                            </div>
                           ) : null}
                           <div className="gapFinderCellCount">
                             {cell.count.toLocaleString()} grants
@@ -527,6 +595,15 @@ export default function GapFinderPage({ grants }: GapFinderPageProps) {
           </tbody>
         </table>
       </div>
+
+      {modal ? (
+        <GrantsModal
+          title={modal.title}
+          grants={modal.grants}
+          downloadFilename={`sci-grants-${slugify(modal.title)}-${todaySlug()}.csv`}
+          onClose={() => setModal(null)}
+        />
+      ) : null}
     </main>
   );
 }

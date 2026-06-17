@@ -1202,22 +1202,41 @@ select.searchInput {
   min-width: 0;
 }
 
-/* Cell button sits in the corner and reveals on hover to avoid clutter */
+/* Row/column header actions sit inline next to the label. */
+.gapFinderHeaderActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+/* Cell buttons sit in the corner and reveal on hover to avoid clutter */
 .gapFinderCellCard {
   position: relative;
 }
 
-.gapFinderCellCard .gapFinderDownloadBtn {
+.gapFinderCellActions {
   position: absolute;
   top: 0.3rem;
   right: 0.3rem;
+  z-index: 2;
+  display: flex;
+  gap: 0.4rem;
   opacity: 0;
   transition: opacity 120ms ease;
 }
 
-.gapFinderCell:hover .gapFinderCellCard .gapFinderDownloadBtn,
-.gapFinderCellCard .gapFinderDownloadBtn:focus-visible {
+.gapFinderCell:hover .gapFinderCellActions,
+.gapFinderCellActions:focus-within {
   opacity: 1;
+}
+
+/* Slightly larger, well-separated targets so the eye/download don't get
+   mis-clicked for each other. */
+.gapFinderCellActions .gapFinderDownloadBtn,
+.gapFinderHeaderActions .gapFinderDownloadBtn {
+  width: 24px;
+  height: 24px;
 }
 
 @media (max-width: 768px) {
@@ -1587,5 +1606,101 @@ select.searchInput {
   .cureMapBody {
     margin-left: 0.75rem;
     margin-right: 0.75rem;
+  }
+}
+
+/* -------- Grants drill-down modal (Cure Map / Gap Finder) -------- */
+.grantsModalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5vh 2vw;
+  background: rgba(6, 8, 18, 0.62);
+  backdrop-filter: blur(6px);
+}
+
+.grantsModal {
+  display: flex;
+  flex-direction: column;
+  width: min(1100px, 100%);
+  max-height: 90vh;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(14, 16, 30, 0.97);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.grantsModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.grantsModalTitle {
+  font-family: "league-spartan", sans-serif;
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+
+.grantsModalMeta {
+  margin-top: 0.25rem;
+  font-size: 0.88rem;
+  opacity: 0.8;
+}
+
+.grantsModalFunding {
+  margin-left: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.grantsModalClose {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  line-height: 1;
+  font-size: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+}
+
+.grantsModalClose:hover {
+  border-color: rgba(132, 159, 244, 0.95);
+  background: rgba(15, 18, 36, 0.6);
+  color: #fff;
+}
+
+.grantsModalBody {
+  padding: 0.9rem 1.1rem 1.1rem;
+  overflow: auto;
+}
+
+/* Breathing room between the download/cards toolbar and the grant table. */
+.grantsModalBody .resultsToolbar {
+  margin-bottom: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .grantsModalBackdrop {
+    padding: 0;
+  }
+
+  .grantsModal {
+    max-height: 100vh;
+    border-radius: 0;
   }
 }

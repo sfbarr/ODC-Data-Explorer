@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ComposableMap,
   Geographies,
   Geography,
 } from "@vnedyalk0v/react19-simple-maps";
 import SingleSelectStub from "../components/SingleSelectStub";
+import GrantsModal from "../components/GrantsModal";
+import { slugify, todaySlug } from "../utils/download";
 
 type Grant = {
   State?: string;
@@ -131,10 +133,46 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
   const [geoErr, setGeoErr] = useState<string | null>(null);
   const [metric, setMetric] = useState<Metric>("funding");
   const [groupBy, setGroupBy] = useState<GroupBy>("state");
-  const [hover, setHover] = useState<
-    { x: number; y: number; name: string; stat: Stat } | null
-  >(null);
+  // Only the tooltip's text content lives in React state; its position is
+  // updated imperatively (below) so moving the mouse never re-renders the map.
+  const [hover, setHover] = useState<{ name: string; stat: Stat } | null>(null);
+  const [modal, setModal] = useState<{ title: string; grants: Grant[] } | null>(
+    null
+  );
   const wrapRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const posRef = useRef({ x: 0, y: 0 });
+
+  // Position the tooltip relative to the chart wrapper without going through
+  // React state — this is what keeps hover smooth across all 50 states.
+  const moveTooltip = useCallback((clientX: number, clientY: number) => {
+    const rect = wrapRef.current?.getBoundingClientRect();
+    const x = clientX - (rect?.left ?? 0);
+    const y = clientY - (rect?.top ?? 0);
+    posRef.current = { x, y };
+    const el = tooltipRef.current;
+    if (el) {
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+    }
+  }, []);
+
+  // Click a state (or region, in region mode) to drill into its grants. The
+  // subset is drawn from the already globally-filtered `grants` prop.
+  const openSubset = useCallback(
+    (abbr: string, region: string | undefined, inRegionMode: boolean) => {
+      const rows = grants.filter((g) => {
+        const gAbbr = cleanText(g.State).toUpperCase();
+        return inRegionMode
+          ? region != null && STATE_TO_REGION[gAbbr] === region
+          : gAbbr === abbr;
+      });
+      if (rows.length === 0) return;
+      const title = inRegionMode && region ? region : ABBR_TO_NAME[abbr] ?? abbr;
+      setModal({ title, grants: rows });
+    },
+    [grants]
+  );
 
   useEffect(() => {
     fetch("/data/states-10m.json")
@@ -240,6 +278,100 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
   const rankedMax = ranked.length ? metricValue(ranked[0].stat, metric) : 0;
   const panelTitle = GROUP_OPTIONS.find((o) => o.value === groupBy)?.label ?? "";
 
+  // The map subtree is memoized so it is NOT rebuilt when the hover tooltip
+  // changes — only when the data/encoding actually changes. This is the core
+  // fix for the hover lag and the "stuck highlight" (the map used to re-render
+  // all 50 states on every mouse move).
+  const mapContent = useMemo(() => {
+    if (!geoData) return null;
+    const inRegionMode = groupBy === "region";
+    return (
+      <ComposableMap
+        projection="geoAlbersUsa"
+        projectionConfig={{ scale: 1000 }}
+        width={980}
+        height={580}
+        style={{ width: "100%", height: "100%", display: "block" }}
+      >
+        <Geographies geography={geoData}>
+          {({ geographies }: { geographies: any[] }) =>
+            geographies.map((geo) => {
+              const fips = String(geo.id ?? "").padStart(2, "0");
+              const abbr = FIPS_TO_ABBR[fips];
+              const region = abbr ? STATE_TO_REGION[abbr] : undefined;
+
+              const stat = inRegionMode
+                ? region
+                  ? regionStats.get(region)
+                  : undefined
+                : abbr
+                  ? stateStats.get(abbr)
+                  : undefined;
+
+              const value = metricValue(stat, metric);
+              const ratio = maxMapValue ? value / maxMapValue : 0;
+
+              return (
+                <Geography
+                  key={geo.rsmKey}
+                  geography={geo}
+                  onMouseEnter={(e: React.MouseEvent) => {
+                    if (!abbr) return;
+                    moveTooltip(e.clientX, e.clientY);
+                    setHover({
+                      name:
+                        inRegionMode && region ? region : ABBR_TO_NAME[abbr] ?? abbr,
+                      stat: stateStats.get(abbr) ?? { funding: 0, count: 0 },
+                    });
+                  }}
+                  onMouseMove={(e: React.MouseEvent) => {
+                    if (!abbr) return;
+                    moveTooltip(e.clientX, e.clientY);
+                  }}
+                  onMouseLeave={() => setHover(null)}
+                  onClick={() => {
+                    if (!abbr) return;
+                    openSubset(abbr, region, inRegionMode);
+                  }}
+                  style={{
+                    default: {
+                      fill: fillForRatio(ratio),
+                      stroke: "rgba(255,255,255,0.22)",
+                      strokeWidth: 0.5,
+                      outline: "none",
+                    },
+                    hover: {
+                      fill: fillForRatio(ratio),
+                      stroke: "rgba(132,159,244,0.95)",
+                      strokeWidth: 1.1,
+                      outline: "none",
+                      cursor: "pointer",
+                    },
+                    pressed: {
+                      fill: fillForRatio(ratio),
+                      stroke: "rgba(132,159,244,0.95)",
+                      strokeWidth: 1.1,
+                      outline: "none",
+                    },
+                  }}
+                />
+              );
+            })
+          }
+        </Geographies>
+      </ComposableMap>
+    );
+  }, [
+    geoData,
+    groupBy,
+    metric,
+    maxMapValue,
+    stateStats,
+    regionStats,
+    moveTooltip,
+    openSubset,
+  ]);
+
   if (geoErr) return <div className="canvas">Geo load error: {geoErr}</div>;
 
   return (
@@ -283,98 +415,14 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
           {!geoData ? (
             <div className="cureMapLoading">Loading map…</div>
           ) : (
-            <div className="cureMapFrame">
-            <ComposableMap
-              projection="geoAlbersUsa"
-              projectionConfig={{ scale: 1000 }}
-              width={980}
-              height={580}
-              style={{ width: "100%", height: "100%", display: "block" }}
-            >
-              <Geographies geography={geoData}>
-                {({ geographies }: { geographies: any[] }) =>
-                  geographies.map((geo) => {
-                    const fips = String(geo.id ?? "").padStart(2, "0");
-                    const abbr = FIPS_TO_ABBR[fips];
-                    const region = abbr ? STATE_TO_REGION[abbr] : undefined;
-
-                    const stat =
-                      groupBy === "region"
-                        ? region
-                          ? regionStats.get(region)
-                          : undefined
-                        : abbr
-                          ? stateStats.get(abbr)
-                          : undefined;
-
-                    const value = metricValue(stat, metric);
-                    const ratio = maxMapValue ? value / maxMapValue : 0;
-
-                    return (
-                      <Geography
-                        key={geo.rsmKey}
-                        geography={geo}
-                        onMouseEnter={(e: React.MouseEvent) => {
-                          if (!abbr) return;
-                          const rect = wrapRef.current?.getBoundingClientRect();
-                          setHover({
-                            x: e.clientX - (rect?.left ?? 0),
-                            y: e.clientY - (rect?.top ?? 0),
-                            name:
-                              groupBy === "region" && region
-                                ? region
-                                : ABBR_TO_NAME[abbr] ?? abbr,
-                            stat: stateStats.get(abbr) ?? { funding: 0, count: 0 },
-                          });
-                        }}
-                        onMouseMove={(e: React.MouseEvent) => {
-                          if (!abbr) return;
-                          const rect = wrapRef.current?.getBoundingClientRect();
-                          setHover((h) =>
-                            h
-                              ? {
-                                  ...h,
-                                  x: e.clientX - (rect?.left ?? 0),
-                                  y: e.clientY - (rect?.top ?? 0),
-                                }
-                              : h
-                          );
-                        }}
-                        onMouseLeave={() => setHover(null)}
-                        style={{
-                          default: {
-                            fill: fillForRatio(ratio),
-                            stroke: "rgba(255,255,255,0.22)",
-                            strokeWidth: 0.5,
-                            outline: "none",
-                          },
-                          hover: {
-                            fill: fillForRatio(ratio),
-                            stroke: "rgba(132,159,244,0.95)",
-                            strokeWidth: 1.1,
-                            outline: "none",
-                            cursor: "pointer",
-                          },
-                          pressed: {
-                            fill: fillForRatio(ratio),
-                            stroke: "rgba(132,159,244,0.95)",
-                            strokeWidth: 1.1,
-                            outline: "none",
-                          },
-                        }}
-                      />
-                    );
-                  })
-                }
-              </Geographies>
-            </ComposableMap>
-            </div>
+            <div className="cureMapFrame">{mapContent}</div>
           )}
 
           {hover ? (
             <div
+              ref={tooltipRef}
               className="cureMapTooltip"
-              style={{ left: hover.x, top: hover.y }}
+              style={{ left: posRef.current.x, top: posRef.current.y }}
             >
               <div className="cureMapTooltipName">{hover.name}</div>
               <div className="cureMapTooltipRow">
@@ -431,6 +479,15 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
           )}
         </aside>
       </div>
+
+      {modal ? (
+        <GrantsModal
+          title={modal.title}
+          grants={modal.grants}
+          downloadFilename={`sci-grants-${slugify(modal.title)}-${todaySlug()}.csv`}
+          onClose={() => setModal(null)}
+        />
+      ) : null}
     </main>
   );
 }

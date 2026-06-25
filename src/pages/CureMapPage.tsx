@@ -4,6 +4,7 @@ import {
   Geographies,
   Geography,
   Marker,
+  ZoomableGroup,
   createCoordinates,
 } from "@vnedyalk0v/react19-simple-maps";
 import SingleSelectStub from "../components/SingleSelectStub";
@@ -75,6 +76,12 @@ const STATE_TO_REGION: Record<string, string> = {
   AZ: "West", CO: "West", ID: "West", MT: "West", NV: "West", NM: "West",
   UT: "West", WY: "West", AK: "West", CA: "West", HI: "West", OR: "West", WA: "West",
 };
+
+// Pan/zoom bounds. Center is roughly the geographic middle of the lower 48,
+// used as the reset target for geoAlbersUsa.
+const MAP_CENTER: [number, number] = [-97, 38];
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 8;
 
 const MAP_STYLE_OPTIONS = [
   { value: "cities", label: "Cities (dots)" },
@@ -182,6 +189,25 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
   const [modal, setModal] = useState<{ title: string; grants: Grant[] } | null>(
     null
   );
+  // Pan/zoom state for the map. center is in geographic coords; zoom is the
+  // d3-zoom scale factor. Updated on drag/wheel (onMoveEnd) and by the buttons.
+  const [position, setPosition] = useState<{
+    coordinates: [number, number];
+    zoom: number;
+  }>({ coordinates: MAP_CENTER, zoom: 1 });
+
+  const zoomBy = useCallback((factor: number) => {
+    setPosition((p) => ({
+      ...p,
+      zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, p.zoom * factor)),
+    }));
+  }, []);
+
+  const resetZoom = useCallback(
+    () => setPosition({ coordinates: MAP_CENTER, zoom: 1 }),
+    []
+  );
+
   const wrapRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const posRef = useRef({ x: 0, y: 0 });
@@ -415,14 +441,7 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
     if (!geoData) return null;
     const inRegionMode = groupBy === "region";
     return (
-      <ComposableMap
-        projection="geoAlbersUsa"
-        projectionConfig={{ scale: 1000 }}
-        width={980}
-        height={580}
-        style={{ width: "100%", height: "100%", display: "block" }}
-      >
-        <Geographies geography={geoData}>
+      <Geographies geography={geoData}>
           {({ geographies }: { geographies: any[] }) =>
             geographies.map((geo) => {
               const fips = String(geo.id ?? "").padStart(2, "0");
@@ -488,7 +507,6 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
             })
           }
         </Geographies>
-      </ComposableMap>
     );
   }, [
     geoData,
@@ -513,13 +531,7 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
         (metric === "funding" ? a.funding : a.count)
     );
     return (
-      <ComposableMap
-        projection="geoAlbersUsa"
-        projectionConfig={{ scale: 1000 }}
-        width={980}
-        height={580}
-        style={{ width: "100%", height: "100%", display: "block" }}
-      >
+      <>
         <Geographies geography={geoData}>
           {({ geographies }: { geographies: any[] }) =>
             geographies.map((geo) => (
@@ -579,7 +591,7 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
             </Marker>
           );
         })}
-      </ComposableMap>
+      </>
     );
   }, [geoData, cityStats, metric, maxCityValue, moveTooltip, openCity]);
 
@@ -646,7 +658,66 @@ export default function CureMapPage({ grants }: CureMapPageProps) {
             <div className="cureMapLoading">Loading map…</div>
           ) : (
             <div className="cureMapFrame">
-              {isCities ? cityMapContent : mapContent}
+              <ComposableMap
+                projection="geoAlbersUsa"
+                projectionConfig={{ scale: 1000 }}
+                width={980}
+                height={580}
+                style={{ width: "100%", height: "100%", display: "block" }}
+              >
+                <ZoomableGroup
+                  center={createCoordinates(
+                    position.coordinates[0],
+                    position.coordinates[1]
+                  )}
+                  zoom={position.zoom}
+                  minZoom={MIN_ZOOM}
+                  maxZoom={MAX_ZOOM}
+                  onMoveEnd={(pos) =>
+                    setPosition({
+                      coordinates: [pos.coordinates[0], pos.coordinates[1]],
+                      zoom: pos.zoom,
+                    })
+                  }
+                >
+                  {isCities ? cityMapContent : mapContent}
+                </ZoomableGroup>
+              </ComposableMap>
+
+              <div className="cureMapZoomControls">
+                <button
+                  type="button"
+                  className="cureMapZoomBtn"
+                  aria-label="Zoom in"
+                  title="Zoom in"
+                  onClick={() => zoomBy(1.5)}
+                  disabled={position.zoom >= MAX_ZOOM}
+                >
+                  +
+                </button>
+                <button
+                  type="button"
+                  className="cureMapZoomBtn"
+                  aria-label="Zoom out"
+                  title="Zoom out"
+                  onClick={() => zoomBy(1 / 1.5)}
+                  disabled={position.zoom <= MIN_ZOOM}
+                >
+                  −
+                </button>
+                <button
+                  type="button"
+                  className="cureMapZoomBtn cureMapZoomReset"
+                  aria-label="Reset zoom"
+                  title="Reset zoom"
+                  onClick={resetZoom}
+                  disabled={position.zoom === 1 &&
+                    position.coordinates[0] === MAP_CENTER[0] &&
+                    position.coordinates[1] === MAP_CENTER[1]}
+                >
+                  ⤢
+                </button>
+              </div>
             </div>
           )}
 

@@ -34,6 +34,47 @@ export function downloadCsv(rows: Record<string, unknown>[], filename: string): 
   URL.revokeObjectURL(url);
 }
 
+/** Trigger a browser download for an already-built Blob. */
+export function triggerDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Serialize an inline <svg> (e.g. a recharts chart) and load it as an <img> so
+ * it can be drawn onto a canvas. A font-family is stamped on because a
+ * standalone SVG loses the CSS cascade and would otherwise fall back to serif.
+ */
+export function svgToImage(svg: SVGSVGElement): Promise<HTMLImageElement> {
+  const rect = svg.getBoundingClientRect();
+  const width = Math.max(1, Math.round(rect.width || svg.clientWidth));
+  const height = Math.max(1, Math.round(rect.height || svg.clientHeight));
+
+  const clone = svg.cloneNode(true) as SVGSVGElement;
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  clone.setAttribute("width", String(width));
+  clone.setAttribute("height", String(height));
+  clone.style.fontFamily =
+    "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
+  const svgString = new XMLSerializer().serializeToString(clone);
+  const svgUrl =
+    "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgString);
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = svgUrl;
+  });
+}
+
 /** Returns a YYYY-MM-DD date string for use in filenames. */
 export function todaySlug(): string {
   return new Date().toISOString().slice(0, 10);

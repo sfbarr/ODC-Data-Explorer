@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { Filters, OptionsMap } from "../types/types";
 import FilterStub from "./FilterStub";
+import SearchableFilterStub from "./SearchableFilterStub";
 import DualFilterStub from "./DualFilterStub";
 import RangeSlider from "./RangeSlider";
 import { downloadCsv, todaySlug } from "../utils/download";
@@ -97,6 +98,24 @@ export default function GrantsSidebar({
             options={opt("State")}
             values={filters.state}
             onChange={(next) => setFilters((f) => ({ ...f, state: next }))}
+          />
+          <SearchableFilterStub
+            label="Organization"
+            options={opt("Organization")}
+            values={filters.organization}
+            onChange={(next) => setFilters((f) => ({ ...f, organization: next }))}
+          />
+          <SearchableFilterStub
+            label="PI"
+            options={opt("PI")}
+            values={filters.pi}
+            onChange={(next) => setFilters((f) => ({ ...f, pi: next }))}
+          />
+          <SearchableFilterStub
+            label="Mechanism"
+            options={opt("Mechanism")}
+            values={filters.mechanism}
+            onChange={(next) => setFilters((f) => ({ ...f, mechanism: next }))}
           />
         </div>
 

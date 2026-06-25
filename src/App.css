@@ -413,6 +413,23 @@ button:hover {
   backdrop-filter: blur(12px);
 }
 
+/* input.* needed to outweigh the later, translucent .searchInput rule */
+input.filterMenuSearch {
+  width: 100%;
+  margin-bottom: 0.4rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  /* Opaque so options scrolling underneath don't show through the sticky box */
+  background: #0e101e;
+}
+
+.filterEmpty {
+  padding: 0.45rem 0.55rem;
+  font-size: 0.82rem;
+  opacity: 0.7;
+}
+
 .filterOptions {
   display: grid;
   grid-template-columns: 1fr;
@@ -516,6 +533,10 @@ button:hover {
   margin-top: 0.75rem;
 }
 
+
+.resultsToolbar {
+  margin-bottom: 0.75rem;
+}
 
 .resultsButtons {
   display: flex;
@@ -1131,8 +1152,10 @@ select.searchInput {
 
 .gapFinderHeaderLabel {
   font-weight: 600;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  /* Wrap only at real word boundaries (spaces / existing hyphens),
+     never mid-word. */
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .gapFinderHeaderSubtext {
@@ -1299,8 +1322,14 @@ select.searchInput {
 .trendFinderControls {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
   gap: 0.75rem;
   margin: 1rem 1rem 1rem;
+}
+
+/* Bottom-aligns with the Metric select (which sits under its label) */
+.trendFinderDownloadBtn {
+  flex: 0 0 auto;
 }
 
 /* Each control (label + select) sizes to its content, not the full row */
@@ -1444,8 +1473,61 @@ select.searchInput {
 /* Aspect-locked frame: the SVG fills it exactly, so the rendered box always
    matches the 980x580 viewBox and never letterboxes (no right-side gap). */
 .cureMapFrame {
+  position: relative;
   width: 100%;
   aspect-ratio: 980 / 580;
+}
+
+/* Drag-to-pan affordance over the zoomable map */
+.cureMapFrame .rsm-svg {
+  cursor: grab;
+}
+.cureMapFrame .rsm-svg:active {
+  cursor: grabbing;
+}
+
+.cureMapZoomControls {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  z-index: 5;
+}
+
+.cureMapZoomBtn {
+  width: 2rem;
+  height: 2rem;
+  /* Override the global button padding (0.6em 1.2em) that otherwise pushes
+     the glyph off-center and makes these square buttons look lopsided. */
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(14, 16, 30, 0.92);
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.cureMapZoomBtn:hover:not(:disabled) {
+  border-color: rgba(132, 159, 244, 0.95);
+  background: rgba(20, 24, 44, 0.95);
+}
+
+.cureMapZoomBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.cureMapZoomReset {
+  font-size: 0.95rem;
 }
 
 .cureMapFrame .rsm-svg {

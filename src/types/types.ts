@@ -29,6 +29,9 @@ export type Filters = {
   readinessGeneral: string[];
   readinessSpecific: string[];
   state: string[];
+  organization: string[];
+  pi: string[];
+  mechanism: string[];
 
   // range filters (undefined means "no filter")
   fiscalYear?: Range;
@@ -45,6 +48,9 @@ export const EMPTY_FILTERS: Filters = {
   readinessGeneral: [],
   readinessSpecific: [],
   state: [],
+  organization: [],
+  pi: [],
+  mechanism: [],
   fiscalYear: undefined,
   amountUsd: undefined,
 };

@@ -135,6 +135,9 @@ export default function App() {
       if (!matchMulti(filters.readinessGeneral, g["Readiness - General"])) return false;
       if (!matchMulti(filters.readinessSpecific, g["Readiness - Specific"])) return false;
       if (!matchMulti(filters.state, g["State"])) return false;
+      if (!matchMulti(filters.organization, g["Organization"])) return false;
+      if (!matchMulti(filters.pi, g["PI"])) return false;
+      if (!matchMulti(filters.mechanism, g["Mechanism"])) return false;
 
       if (!inRange(filters.fiscalYear, Number(g["Fiscal Year"] ?? 0))) return false;
       if (!inRange(filters.amountUsd, parseAmount(g["Amount"]))) return false;
@@ -164,7 +167,10 @@ export default function App() {
       filters.interventionSpecific.length +
       filters.readinessGeneral.length +
       filters.readinessSpecific.length +
-      filters.state.length;
+      filters.state.length +
+      filters.organization.length +
+      filters.pi.length +
+      filters.mechanism.length;
     return selected + (q.trim() ? 1 : 0);
   }, [filters, q]);
 

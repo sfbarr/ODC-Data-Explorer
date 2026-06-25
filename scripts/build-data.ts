@@ -135,6 +135,9 @@ const FILTERABLE_COLUMNS = new Set([
   "Readiness - General",
   "Readiness - Specific",
   "State",
+  "Organization",
+  "PI",
+  "Mechanism",
 ]);
 
 function shouldIncludeOptionsColumn(_rows: Row[], column: string): boolean {

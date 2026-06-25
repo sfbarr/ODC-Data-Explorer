@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "preview": "vite preview",
-    "build:data": "tsx scripts/build-data.ts src/assets/data/ODC_grants.xlsx",
+    "build:data": "tsx scripts/build-data.ts src/assets/data/ODC_grants_june_2026.xlsx",
     "build:cities": "tsx scripts/build-city-coords.ts"
   },
   "dependencies": {
